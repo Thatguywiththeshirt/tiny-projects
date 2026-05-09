@@ -14,7 +14,7 @@ Originally developed with concepts tied to MIS and Applied AI for Business (feat
 * **SonoWave Data Factory (`SonoWave.html`)**
     * An interactive assembly-line simulator for Azure Cognitive Services.
     * Players drag and drop Language (Sentiment, NER, Translation) and Speech (STT, TTS) workloads onto a moving conveyor belt to process data packets while managing costs and strict Enterprise Compliance rules.
-* **The Roboso Mandate (`Roboso2.html`)**
+* **The Roboso Mandate (`Roboso.html`)**
     * A Phaser.js-powered text adventure/management game. 
     * You are the Chief AI Officer at Roboso Medical. Make high-stakes decisions on AI deployments while balancing four critical KPIs: Budget, Morale, Trust, and Compliance. Navigate ethical dilemmas, biases, and data privacy crises.
 
