@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Text Transformer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* CSS Tokens */
+    :root[data-theme="dark"] {
+      --color-bg: #0e0e0c;
+      --color-surface: #141412;
+      --color-surface-2: #1a1a17;
+      --color-surface-offset: #202020;
+      --color-border: #333330;
+      --color-text: #e8e6e0;
+      --color-text-muted: #7a7870;
+      --color-text-faint: #4a4a47;
+      --color-primary: #5de6a0;
+      --color-primary-dim: rgba(93, 230, 160, 0.12);
+    }
+
+    :root[data-theme="light"] {
+      --color-bg: #f5f4ef;
+      --color-surface: #f9f8f4;
+      --color-surface-2: #ffffff;
+      --color-surface-offset: #e8e6df;
+      --color-border: #d4d2cb;
+      --color-text: #1c1b17;
+      --color-text-muted: #5e5c54;
+      --color-text-faint: #8f8d83;
+      --color-primary: #007a4a;
+      --color-primary-dim: rgba(0, 122, 74, 0.12);
+    }
+
+    :root {
+      --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem;
+      --space-4: 1rem; --space-5: 1.25rem; --space-6: 1.5rem;
+      --space-8: 2rem; --space-10: 2.5rem; --space-12: 3rem;
+      --radius-sm: 0.375rem; --radius-md: 0.5rem;
+      --radius-lg: 0.75rem; --radius-xl: 1rem; --radius-full: 9999px;
+      --transition: 160ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, ::before, ::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--color-bg);
+      color: var(--color-text);
+      font-family: 'Geist', sans-serif;
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: background-color var(--transition), color var(--transition);
+    }
+
+    .container {
+      width: 100%;
+      max-width: 860px;
+      padding: var(--space-8) var(--space-6);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-8);
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: var(--color-bg);
+      padding-top: var(--space-4);
+      padding-bottom: var(--space-4);
+      z-index: 10;
+    }
+    
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .brand h1 {
+      font-size: 1.125rem;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+    }
+
+    .theme-toggle {
+      background: transparent;
+      border: none;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      padding: var(--space-2);
+      border-radius: var(--radius-md);
+      transition: all var(--transition);
+      display: flex;
+    }
+
+    .theme-toggle:hover {
+      background: var(--color-surface-offset);
+      color: var(--color-text);
+    }
+
+    /* Input Area */
+    .input-section {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-xl);
+      padding: var(--space-4);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    .textarea-wrapper {
+      position: relative;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      background: var(--color-surface-2);
+      color: var(--color-text);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-4);
+      padding-bottom: var(--space-8);
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.875rem;
+      resize: vertical;
+      transition: border-color var(--transition);
+      outline: none;
+    }
+
+    textarea:focus {
+      border-color: var(--color-primary);
+    }
+
+    .clear-btn {
+      position: absolute;
+      top: var(--space-2);
+      right: var(--space-2);
+      background: var(--color-surface-offset);
+      color: var(--color-text-muted);
+      border: none;
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-full);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.25rem;
+      transition: all var(--transition);
+    }
+
+    .clear-btn:hover {
+      background: var(--color-border);
+      color: var(--color-text);
+    }
+
+    .char-count {
+      position: absolute;
+      bottom: var(--space-3);
+      right: var(--space-4);
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+      pointer-events: none;
+    }
+
+    .input-actions {
+      display: flex;
+      gap: var(--space-3);
+    }
+
+    button {
+      font-family: inherit;
+      font-weight: 500;
+      font-size: 0.875rem;
+    }
+
+    .btn-primary {
+      background: var(--color-primary);
+      color: #000;
+      border: none;
+      padding: var(--space-2) var(--space-5);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: opacity var(--transition), transform var(--transition);
+    }
+
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-primary:active { transform: scale(0.98); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--color-text-muted);
+      border: 1px solid var(--color-border);
+      padding: var(--space-2) var(--space-5);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .btn-ghost:hover {
+      background: var(--color-surface-offset);
+      color: var(--color-text);
+    }
+
+    /* Empty State */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-12) 0;
+      gap: var(--space-4);
+      color: var(--color-text-faint);
+      text-align: center;
+    }
+
+    .empty-state svg {
+      width: 64px;
+      height: 64px;
+      opacity: 0.4;
+    }
+
+    /* Results Area */
+    .results-section {
+      display: none;
+      flex-direction: column;
+      gap: var(--space-6);
+    }
+
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .results-header h2 {
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--color-text);
+    }
+
+    .btn-pill {
+      background: var(--color-surface);
+      color: var(--color-text);
+      border: 1px solid var(--color-border);
+      padding: var(--space-1) var(--space-3);
+      border-radius: var(--radius-full);
+      font-size: 0.75rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      transition: all var(--transition);
+    }
+
+    .btn-pill:hover { background: var(--color-surface-offset); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(380px, 100%), 1fr));
+      gap: var(--space-4);
+    }
+
+    /* Cards */
+    .card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-3) var(--space-4);
+      background: var(--color-surface-2);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .card-label-wrap {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: 0.75rem;
+    }
+
+    .card-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: var(--radius-full);
+    }
+
+    .card-label {
+      font-weight: 600;
+      color: var(--color-text);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .card-desc {
+      color: var(--color-text-muted);
+    }
+
+    .copy-btn {
+      background: transparent;
+      border: none;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition);
+    }
+
+    .copy-btn:hover {
+      background: var(--color-surface-offset);
+      color: var(--color-text);
+    }
+
+    .copy-btn.copied {
+      color: var(--color-primary);
+    }
+
+    .card-body {
+      padding: var(--space-4);
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.8125rem;
+      color: var(--color-text);
+      max-height: 200px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    
+    /* Scrollbar */
+    .card-body::-webkit-scrollbar { width: 6px; }
+    .card-body::-webkit-scrollbar-track { background: transparent; }
+    .card-body::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: var(--radius-full); }
+    .card-body::-webkit-scrollbar-thumb:hover { background: var(--color-text-faint); }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: var(--space-6);
+      right: var(--space-6);
+      background: var(--color-surface-2);
+      border: 1px solid var(--color-border);
+      color: var(--color-text);
+      padding: var(--space-3) var(--space-5);
+      border-radius: var(--radius-full);
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      transform: translateY(150%);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 100;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .toast-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--color-primary);
+      border-radius: var(--radius-full);
+    }
+
+    @media (max-width: 600px) {
+      .container { padding: var(--space-4); }
+      .grid { grid-template-columns: 1fr; }
+      .btn-primary, .btn-ghost { padding: var(--space-3) var(--space-4); min-height: 44px; }
+      .copy-btn, .clear-btn { min-width: 44px; min-height: 44px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header class="header">
+      <div class="brand">
+        <svg viewBox="0 0 32 32" fill="none" width="32" height="32">
+          <rect width="32" height="32" rx="8" fill="var(--color-primary)" opacity="0.12"/>
+          <rect x="6" y="9" width="12" height="2" rx="1" fill="var(--color-primary)"/>
+          <rect x="6" y="14" width="20" height="2" rx="1" fill="var(--color-primary)" opacity="0.7"/>
+          <rect x="6" y="19" width="8" height="2" rx="1" fill="var(--color-primary)" opacity="0.4"/>
+          <path d="M22 16 L27 20.5 L22 25" stroke="var(--color-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <h1>Text Transformer</h1>
+      </div>
+      <button class="theme-toggle" id="theme-btn" aria-label="Toggle theme">
+        <svg id="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        <svg id="sun-icon" style="display:none" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="4.22" x2="19.78" y2="5.64"></line></svg>
+      </button>
+    </header>
+
+    <main>
+      <div class="input-section">
+        <div class="textarea-wrapper">
+          <textarea id="input-text" placeholder="Type or paste text to transform..."></textarea>
+          <button class="clear-btn" id="clear-btn" aria-label="Clear input">×</button>
+          <div class="char-count" id="char-count">0 chars</div>
+        </div>
+        <div class="input-actions">
+          <button class="btn-primary" id="transform-btn">Transform</button>
+          <button class="btn-ghost" id="sample-btn">Sample Text</button>
+        </div>
+      </div>
+
+      <div class="empty-state" id="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+          <line x1="12" y1="22.08" x2="12" y2="12"></line>
+        </svg>
+        <p>Enter text above and hit Transform</p>
+      </div>
+
+      <div class="results-section" id="results-section">
+        <div class="results-header">
+          <h2>8 Encodings</h2>
+          <button class="btn-pill" id="copy-all-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            Copy All
+          </button>
+        </div>
+        <div class="grid" id="cards-grid">
+          <!-- Cards injected here via JS -->
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast">
+    <div class="toast-dot"></div>
+    <span id="toast-msg">Copied to clipboard</span>
+  </div>
+
+  <script>
+    // --- Application State ---
+    let currentTheme = 'dark';
+    
+    // --- Dictionary Data ---
+    const morseMap = {
+      'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.', 'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..', 'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.', 'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-', 'Y': '-.--', 'Z': '--..',
+      '0': '-----', '1': '.----', '2': '..---', '3': '...--', '4': '....-', '5': '.....', '6': '-....', '7': '--...', '8': '---..', '9': '----.',
+      '.': '.-.-.-', ',': '--..--', '?': '..--..', "'": '.----.', '!': '-.-.--', '/': '-..-.', '(': '-.--.', ')': '-.--.-', '&': '.-...', ':': '---...', ';': '-.-.-.', '=': '-...-', '+': '.-.-.', '-': '-....-', '_': '..--.-', '"': '.-..-.', '$': '...-..-', '@': '.--.-.'
+    };
+
+    const upsideDownMap = {
+      'a':'ɐ', 'b':'q', 'c':'ɔ', 'd':'p', 'e':'ǝ', 'f':'ɟ', 'g':'ƃ', 'h':'ɥ', 'i':'ᴉ', 'j':'ɾ', 'k':'ʞ', 'l':'l', 'm':'ɯ', 'n':'u', 'o':'o', 'p':'d', 'q':'b', 'r':'ɹ', 's':'s', 't':'ʇ', 'u':'n', 'v':'ʌ', 'w':'ʍ', 'x':'x', 'y':'ʎ', 'z':'z',
+      'A':'∀', 'B':'𐐒', 'C':'Ɔ', 'D':'ᗡ', 'E':'Ǝ', 'F':'Ⅎ', 'G':'פ', 'H':'H', 'I':'I', 'J':'ſ', 'K':'ʞ', 'L':'˥', 'M':'W', 'N':'N', 'O':'O', 'P':'Ԁ', 'Q':'Q', 'R':'ɹ', 'S':'S', 'T':'┴', 'U':'∩', 'V':'Λ', 'W':'M', 'X':'X', 'Y':'⅄', 'Z':'Z',
+      '0':'0', '1':'Ɩ', '2':'ᄅ', '3':'Ɛ', '4':'ㄣ', '5':'ϛ', '6':'9', '7':'ㄥ', '8':'8', '9':'6',
+      '.':'˙', ',':"'", '?':'¿', '!':'¡'
+    };
+
+    const zalgoAbove = '͉͈͍͎͍̍̎̄̅̿̑̆̐͒͗͑̇̈̊͂̓̈͊͋͌̃̂̌͐̀́̋̏̒̓̔̽̉ͅ'.split('');
+    const zalgoBelow = '̖̗̘̙̜̝̞̟̠̤̥̦̩̪̫̬̭̮̯̰̱̲̳̹̺̻̼͇͈͉͍͎͓͔͕͖͙͚ͅ'.split('');
+
+    // --- Transform Logic Functions ---
+    const transformers = {
+      base64: (str) => {
+        try { return btoa(unescape(encodeURIComponent(str))); }
+        catch (e) { return 'Encoding Error'; }
+      },
+      binary: (str) => {
+        return str.split('').map(char => {
+          let bin = char.charCodeAt(0).toString(2);
+          return bin.padStart(8, '0');
+        }).join(' ');
+      },
+      morse: (str) => {
+        return str.toUpperCase().split('').map(char => {
+          if (char === ' ') return '/';
+          return morseMap[char] || '?';
+        }).join(' ');
+      },
+      bubble: (str) => {
+        return str.split('').map(char => {
+          const code = char.charCodeAt(0);
+          if (code >= 33 && code <= 126) return String.fromCharCode(code + 65248);
+          if (code === 32) return String.fromCharCode(12288);
+          return char;
+        }).join('');
+      },
+      upsideDown: (str) => {
+        return str.split('').reverse().map(char => upsideDownMap[char] || char).join('');
+      },
+      hex: (str) => {
+        const bytes = new TextEncoder().encode(str);
+        return Array.from(bytes).map(b => b.toString(16).padStart(2, '0').toUpperCase()).join(' ');
+      },
+      rot13: (str) => {
+        return str.replace(/[a-zA-Z]/g, (char) => {
+          const base = char <= 'Z' ? 65 : 97;
+          return String.fromCharCode(((char.charCodeAt(0) - base + 13) % 26) + base);
+        });
+      },
+      zalgo: (str) => {
+        return str.split('').map(char => {
+          if (char === ' ' || char === '\n') return char;
+          let newChar = char;
+          const numAbove = Math.floor(Math.random() * 3) + 1;
+          const numBelow = Math.floor(Math.random() * 3) + 1;
+          for(let i=0; i<numAbove; i++) newChar += zalgoAbove[Math.floor(Math.random() * zalgoAbove.length)];
+          for(let i=0; i<numBelow; i++) newChar += zalgoBelow[Math.floor(Math.random() * zalgoBelow.length)];
+          return newChar;
+        }).join('');
+      }
+    };
+
+    // --- Encodings Config ---
+    const encodingsConfig = [
+      { id: 'base64', name: 'Base64', desc: 'RFC 4648', color: '#5de6a0' },
+      { id: 'binary', name: 'Binary', desc: '8-bit ASCII', color: '#60a5fa' },
+      { id: 'morse', name: 'Morse Code', desc: 'ITU standard', color: '#f59e0b' },
+      { id: 'bubble', name: 'Bubble Text', desc: 'Fullwidth Unicode', color: '#c084fc' },
+      { id: 'upsideDown', name: 'Upside Down', desc: 'Flipped Unicode', color: '#f87171' },
+      { id: 'hex', name: 'Hexadecimal', desc: 'UTF-8 hex bytes', color: '#34d399' },
+      { id: 'rot13', name: 'ROT13', desc: 'Caesar cipher +13', color: '#fb923c' },
+      { id: 'zalgo', name: 'Zalgo Text', desc: 'Corrupted Unicode', color: '#a78bfa' }
+    ];
+
+    // --- DOM Elements ---
+    const dom = {
+      themeBtn: document.getElementById('theme-btn'),
+      moonIcon: document.getElementById('moon-icon'),
+      sunIcon: document.getElementById('sun-icon'),
+      input: document.getElementById('input-text'),
+      clearBtn: document.getElementById('clear-btn'),
+      charCount: document.getElementById('char-count'),
+      transformBtn: document.getElementById('transform-btn'),
+      sampleBtn: document.getElementById('sample-btn'),
+      emptyState: document.getElementById('empty-state'),
+      resultsSection: document.getElementById('results-section'),
+      cardsGrid: document.getElementById('cards-grid'),
+      copyAllBtn: document.getElementById('copy-all-btn'),
+      toast: document.getElementById('toast'),
+      toastMsg: document.getElementById('toast-msg')
+    };
+
+    // --- Initialization ---
+    function initCards() {
+      dom.cardsGrid.innerHTML = encodingsConfig.map(enc => `
+        <div class="card" id="card-${enc.id}">
+          <div class="card-header">
+            <div class="card-label-wrap">
+              <span class="card-dot" style="background: ${enc.color}"></span>
+              <span class="card-label">${enc.name}</span>
+              <span class="card-desc">${enc.desc}</span>
+            </div>
+            <button class="copy-btn" data-id="${enc.id}" aria-label="Copy ${enc.name}">
+              <svg class="icon-copy" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              <svg class="icon-check" style="display:none" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </button>
+          </div>
+          <div class="card-body" id="out-${enc.id}"></div>
+        </div>
+      `).join('');
+
+      document.querySelectorAll('.copy-btn').forEach(btn => {
+        btn.addEventListener('click', () => copyIndividual(btn));
+      });
+    }
+
+    // --- Utility Functions ---
+    const escapeHTML = (str) => str.replace(/[&<>'"]/g, 
+      tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag])
+    );
+
+    let toastTimeout;
+    function showToast(msg) {
+      dom.toastMsg.textContent = msg;
+      dom.toast.classList.add('show');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => dom.toast.classList.remove('show'), 2000);
+    }
+
+    function autoResize() {
+      dom.input.style.height = 'auto';
+      dom.input.style.height = (dom.input.scrollHeight) + 'px';
+    }
+
+    function updateInputState() {
+      const val = dom.input.value;
+      const len = val.length;
+      dom.charCount.textContent = `${len} char${len !== 1 ? 's' : ''}`;
+      dom.clearBtn.style.display = len > 0 ? 'flex' : 'none';
+      autoResize();
+    }
+
+    async function copyToClipboard(text) {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand("copy");
+        textArea.remove();
+      }
+    }
+
+    // --- Actions ---
+    function toggleTheme() {
+      currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', currentTheme);
+      dom.moonIcon.style.display = currentTheme === 'dark' ? 'block' : 'none';
+      dom.sunIcon.style.display = currentTheme === 'light' ? 'block' : 'none';
+    }
+
+    function runTransform() {
+      const text = dom.input.value;
+      if (!text) return;
+
+      dom.emptyState.style.display = 'none';
+      dom.resultsSection.style.display = 'flex';
+
+      encodingsConfig.forEach(enc => {
+        const result = transformers[enc.id](text);
+        document.getElementById(`out-${enc.id}`).innerHTML = escapeHTML(result);
+      });
+    }
+
+    function applySample() {
+      dom.input.value = "Hello, World! Testing 1-2-3.";
+      updateInputState();
+      runTransform();
+    }
+
+    async function copyIndividual(btn) {
+      const id = btn.getAttribute('data-id');
+      const text = document.getElementById(`out-${id}`).textContent;
+      
+      await copyToClipboard(text);
+      
+      const iconCopy = btn.querySelector('.icon-copy');
+      const iconCheck = btn.querySelector('.icon-check');
+      
+      btn.classList.add('copied');
+      iconCopy.style.display = 'none';
+      iconCheck.style.display = 'block';
+      showToast(`Copied ${encodingsConfig.find(e => e.id === id).name}`);
+
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        iconCopy.style.display = 'block';
+        iconCheck.style.display = 'none';
+      }, 1800);
+    }
+
+    async function copyAll() {
+      let combined = "";
+      encodingsConfig.forEach((enc, i) => {
+        const val = document.getElementById(`out-${enc.id}`).textContent;
+        combined += `=== ${enc.name} ===\n${val}\n`;
+        if (i < encodingsConfig.length - 1) combined += '\n';
+      });
+
+      await copyToClipboard(combined);
+      showToast("Copied all encodings");
+    }
+
+    // --- Event Listeners ---
+    dom.themeBtn.addEventListener('click', toggleTheme);
+    
+    dom.input.addEventListener('input', updateInputState);
+    
+    dom.input.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        e.preventDefault();
+        runTransform();
+      }
+    });
+
+    dom.clearBtn.addEventListener('click', () => {
+      dom.input.value = '';
+      updateInputState();
+      dom.input.focus();
+    });
+
+    dom.transformBtn.addEventListener('click', runTransform);
+    dom.sampleBtn.addEventListener('click', applySample);
+    dom.copyAllBtn.addEventListener('click', copyAll);
+
+    // Boot
+    initCards();
+    updateInputState();
+
+  </script>
+</body>
+</html>
