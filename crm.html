@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Local CSV CRM with Detail Modal</title>
+  <style>
+    :root { font-family: system-ui, -apple-system, sans-serif; background: #f8fafc; color: #0f172a; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 24px; max-width: 1400px; margin: auto; }
+    
+    /* Toolbar */
+    .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+    button, label.btn { background: #2563eb; color: white; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; border: none; }
+    button:hover, label.btn:hover { background: #1d4ed8; }
+    .btn-secondary { background: #64748b; }
+    .btn-secondary:hover { background: #475569; }
+    input[type="file"] { display: none; }
+    input, select, textarea { padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; width: 100%; }
+
+    /* Pipeline */
+    .pipeline { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; align-items: start; }
+    .stage-col { background: #f1f5f9; border-radius: 8px; padding: 12px; min-height: 500px; }
+    .stage-header { display: flex; justify-content: space-between; font-weight: 700; font-size: 12px; text-transform: uppercase; color: #64748b; margin-bottom: 12px; }
+    
+    /* Lead Card */
+    .card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 10px; cursor: pointer; transition: transform 0.1s, box-shadow 0.1s; }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-color: #cbd5e1; }
+    .card-title { font-weight: 600; font-size: 15px; margin: 0 0 2px 0; }
+    .card-company { font-size: 13px; color: #64748b; margin-bottom: 8px; }
+    .card-meta { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+    .card-val { font-weight: 700; color: #0f172a; }
+    .badge { font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+    .badge-hot { background: #fee2e2; color: #991b1b; }
+    .badge-warm { background: #fef3c7; color: #92400e; }
+    .badge-cold { background: #e0f2fe; color: #075985; }
+
+    /* Modal */
+    .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(2px); z-index: 50; align-items: center; justify-content: center; }
+    .modal-backdrop.active { display: flex; }
+    .modal-window { background: white; border-radius: 12px; width: 90%; max-width: 900px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); }
+    .modal-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+    .modal-body { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; overflow-y: auto; }
+    .modal-footer { padding: 12px 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; background: #f8fafc; }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 11px; font-weight: 600; color: #64748b; margin-bottom: 4px; text-transform: uppercase; }
+    
+    /* Timeline / Activity */
+    .timeline { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; max-height: 250px; overflow-y: auto; }
+    .timeline-item { background: #f8fafc; border-left: 3px solid #3b82f6; padding: 8px 12px; border-radius: 0 6px 6px 0; font-size: 12px; }
+    .timeline-meta { font-weight: 600; color: #475569; display: flex; justify-content: space-between; margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+
+  <div class="toolbar">
+    <label class="btn">
+      📥 Import CSV
+      <input type="file" id="csvFileInput" accept=".csv">
+    </label>
+    <button class="btn" onclick="exportCSV()">💾 Export CSV</button>
+    <button class="btn btn-secondary" onclick="openNewLeadModal()">+ New Lead</button>
+    <input type="text" id="searchInput" placeholder="Search name, company, email..." style="max-width: 250px;" oninput="render()">
+  </div>
+
+  <div class="pipeline" id="board"></div>
+
+  <!-- Detail & Edit Modal -->
+  <div class="modal-backdrop" id="leadModal">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 style="margin: 0;" id="modalHeading">Lead Details</h3>
+        <button style="background:transparent; color:#64748b; font-size:18px;" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <!-- Left: Core Info -->
+        <div>
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="m_name">
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div class="form-group">
+              <label>Company</label>
+              <input type="text" id="m_company">
+            </div>
+            <div class="form-group">
+              <label>Job Title</label>
+              <input type="text" id="m_title">
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="m_email">
+            </div>
+            <div class="form-group">
+              <label>Phone</label>
+              <input type="tel" id="m_phone">
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div class="form-group">
+              <label>Deal Value ($)</label>
+              <input type="number" id="m_value">
+            </div>
+            <div class="form-group">
+              <label>Stage</label>
+              <select id="m_stage">
+                <option value="Lead">Lead</option>
+                <option value="Qualified">Qualified</option>
+                <option value="Proposal">Proposal</option>
+                <option value="Closed-Won">Closed-Won</option>
+              </select>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div class="form-group">
+              <label>Priority</label>
+              <select id="m_priority">
+                <option value="Hot">🔥 Hot</option>
+                <option value="Warm">⚡ Warm</option>
+                <option value="Cold">❄️ Cold</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Target Close</label>
+              <input type="date" id="m_close">
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Comms & Activity -->
+        <div style="border-left: 1px solid #e2e8f0; padding-left: 20px;">
+          <h4 style="margin: 0 0 8px 0; font-size: 14px;">Log Communication</h4>
+          <div style="display: flex; gap: 6px; margin-bottom: 6px;">
+            <select id="act_type" style="width: 110px;">
+              <option value="Call">📞 Call</option>
+              <option value="Email">✉️ Email</option>
+              <option value="Meeting">👥 Meeting</option>
+              <option value="Note">📝 Note</option>
+            </select>
+            <input type="text" id="act_text" placeholder="Summary of interaction...">
+            <button class="btn" style="padding: 6px 12px;" onclick="addActivity()">Log</button>
+          </div>
+
+          <h4 style="margin: 16px 0 4px 0; font-size: 13px; color: #64748b;">Activity History</h4>
+          <div class="timeline" id="activityTimeline"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button style="background: #ef4444;" onclick="deleteActiveLead()">Delete Lead</button>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+          <button class="btn" onclick="saveActiveLead()">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STAGES = ['Lead', 'Qualified', 'Proposal', 'Closed-Won'];
+    let activeLeadId = null;
+
+    let leads = JSON.parse(localStorage.getItem('crm_leads_v2')) || [
+      {
+        id: '1', name: 'Alex Rivera', company: 'Nexus Ltd', title: 'VP Operations',
+        email: 'alex@nexus.io', phone: '+1 555-0192', value: '18000', stage: 'Proposal',
+        priority: 'Hot', target_close: '2026-09-15',
+        activities: [
+          { date: '2026-08-20 10:30', type: 'Call', text: 'Reviewed initial SLA terms' },
+          { date: '2026-08-22 14:15', type: 'Email', text: 'Sent updated pricing sheet' }
+        ]
+      },
+      {
+        id: '2', name: 'Sarah Chen', company: 'Skyline Inc', title: 'Chief Architect',
+        email: 'sarah@skyline.co', phone: '+1 555-0843', value: '45000', stage: 'Qualified',
+        priority: 'Warm', target_close: '2026-10-01',
+        activities: [
+          { date: '2026-08-18 09:00', type: 'Meeting', text: 'Demoed offline-first database workflow' }
+        ]
+      }
+    ];
+
+    function saveState() {
+      localStorage.setItem('crm_leads_v2', JSON.stringify(leads));
+      render();
+    }
+
+    function render() {
+      const filter = document.getElementById('searchInput').value.toLowerCase();
+      const board = document.getElementById('board');
+      board.innerHTML = '';
+
+      STAGES.forEach(stage => {
+        const stageLeads = leads.filter(l => l.stage === stage && 
+          (l.name.toLowerCase().includes(filter) || 
+           l.company.toLowerCase().includes(filter) || 
+           (l.email && l.email.toLowerCase().includes(filter)))
+        );
+
+        const col = document.createElement('div');
+        col.className = 'stage-col';
+        col.innerHTML = `
+          <div class="stage-header">
+            <span>${stage}</span>
+            <span>(${stageLeads.length})</span>
+          </div>
+        `;
+
+        stageLeads.forEach(lead => {
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.onclick = () => openEditModal(lead.id);
+
+          const priorityClass = lead.priority === 'Hot' ? 'badge-hot' : lead.priority === 'Warm' ? 'badge-warm' : 'badge-cold';
+
+          card.innerHTML = `
+            <div class="card-title">${lead.name}</div>
+            <div class="card-company">${lead.company} ${lead.title ? '• ' + lead.title : ''}</div>
+            <div class="card-meta">
+              <span class="card-val">$${Number(lead.value || 0).toLocaleString()}</span>
+              <span class="badge ${priorityClass}">${lead.priority || 'Warm'}</span>
+            </div>
+          `;
+          col.appendChild(card);
+        });
+
+        board.appendChild(col);
+      });
+    }
+
+    function openEditModal(id) {
+      activeLeadId = id;
+      const lead = leads.find(l => l.id === id);
+      if (!lead) return;
+
+      document.getElementById('modalHeading').innerText = `Edit: ${lead.name}`;
+      document.getElementById('m_name').value = lead.name || '';
+      document.getElementById('m_company').value = lead.company || '';
+      document.getElementById('m_title').value = lead.title || '';
+      document.getElementById('m_email').value = lead.email || '';
+      document.getElementById('m_phone').value = lead.phone || '';
+      document.getElementById('m_value').value = lead.value || '0';
+      document.getElementById('m_stage').value = lead.stage || 'Lead';
+      document.getElementById('m_priority').value = lead.priority || 'Warm';
+      document.getElementById('m_close').value = lead.target_close || '';
+
+      renderTimeline(lead.activities || []);
+      document.getElementById('leadModal').classList.add('active');
+    }
+
+    function openNewLeadModal() {
+      activeLeadId = 'NEW';
+      document.getElementById('modalHeading').innerText = 'New Lead';
+      ['m_name', 'm_company', 'm_title', 'm_email', 'm_phone', 'm_value', 'm_close', 'act_text'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      document.getElementById('m_stage').value = 'Lead';
+      document.getElementById('m_priority').value = 'Warm';
+      renderTimeline([]);
+      document.getElementById('leadModal').classList.add('active');
+    }
+
+    function renderTimeline(activities) {
+      const container = document.getElementById('activityTimeline');
+      container.innerHTML = activities.length === 0 ? '<div style="color:#94a3b8; font-size:12px;">No activity logged yet.</div>' : '';
+      
+      activities.slice().reverse().forEach(act => {
+        const item = document.createElement('div');
+        item.className = 'timeline-item';
+        item.innerHTML = `
+          <div class="timeline-meta">
+            <span>${act.type}</span>
+            <span>${act.date}</span>
+          </div>
+          <div>${act.text}</div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function addActivity() {
+      const text = document.getElementById('act_text').value.trim();
+      if (!text) return;
+      const type = document.getElementById('act_type').value;
+      const date = new Date().toISOString().slice(0, 16).replace('T', ' ');
+
+      if (activeLeadId === 'NEW') {
+        alert('Please save the lead first before attaching activity.');
+        return;
+      }
+
+      const lead = leads.find(l => l.id === activeLeadId);
+      if (lead) {
+        if (!lead.activities) lead.activities = [];
+        lead.activities.push({ date, type, text });
+        document.getElementById('act_text').value = '';
+        renderTimeline(lead.activities);
+        saveState();
+      }
+    }
+
+    function saveActiveLead() {
+      const data = {
+        name: document.getElementById('m_name').value.trim() || 'Unnamed Lead',
+        company: document.getElementById('m_company').value.trim() || 'N/A',
+        title: document.getElementById('m_title').value.trim(),
+        email: document.getElementById('m_email').value.trim(),
+        phone: document.getElementById('m_phone').value.trim(),
+        value: document.getElementById('m_value').value || '0',
+        stage: document.getElementById('m_stage').value,
+        priority: document.getElementById('m_priority').value,
+        target_close: document.getElementById('m_close').value
+      };
+
+      if (activeLeadId === 'NEW') {
+        leads.push({ id: Date.now().toString(), ...data, activities: [] });
+      } else {
+        const idx = leads.findIndex(l => l.id === activeLeadId);
+        if (idx !== -1) {
+          leads[idx] = { ...leads[idx], ...data };
+        }
+      }
+
+      closeModal();
+      saveState();
+    }
+
+    function deleteActiveLead() {
+      if (activeLeadId !== 'NEW') {
+        leads = leads.filter(l => l.id !== activeLeadId);
+        saveState();
+      }
+      closeModal();
+    }
+
+    function closeModal() {
+      document.getElementById('leadModal').classList.remove('active');
+    }
+
+    // CSV Parsing (Supports nested activities string: "Date~Type~Text;Date~Type~Text")
+    document.getElementById('csvFileInput').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const rows = evt.target.result.split(/\r?\n/).filter(r => r.trim());
+        const headers = rows[0].split(',').map(h => h.replace(/^"|"$/g, '').trim().toLowerCase());
+
+        leads = rows.slice(1).map((rowStr, idx) => {
+          // Basic CSV regex to handle commas inside quotes
+          const match = rowStr.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
+          const vals = match.map(v => v.replace(/^"|"$/g, '').replace(/""/g, '"').trim());
+          
+          let obj = { id: Date.now().toString() + idx, activities: [] };
+          headers.forEach((h, i) => obj[h] = vals[i] || '');
+          
+          if (obj.activities_raw) {
+            obj.activities = obj.activities_raw.split(';;').map(entry => {
+              const [date, type, text] = entry.split('~');
+              return { date, type, text };
+            }).filter(a => a.text);
+          }
+          return obj;
+        });
+        saveState();
+      };
+      reader.readAsText(file);
+    });
+
+    // CSV Export
+    function exportCSV() {
+      const headers = ['id', 'name', 'company', 'title', 'email', 'phone', 'value', 'stage', 'priority', 'target_close', 'activities_raw'];
+      const csvRows = leads.map(l => {
+        const rawActivities = (l.activities || []).map(a => `${a.date}~${a.type}~${a.text}`).join(';;');
+        const copy = { ...l, activities_raw: rawActivities };
+        return headers.map(h => `"${(copy[h] || '').toString().replace(/"/g, '""')}"`).join(',');
+      });
+
+      const csvContent = [headers.join(','), ...csvRows].join('\r\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `crm_export_${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    render();
+  </script>
+</body>
+</html>
