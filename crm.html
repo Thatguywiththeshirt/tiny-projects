@@ -2,291 +2,1537 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Local CSV CRM with Detail Modal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offline CRM - Federal Operations Suite</title>
   <style>
-    :root { font-family: system-ui, -apple-system, sans-serif; background: #f8fafc; color: #0f172a; }
-    * { box-sizing: border-box; }
-    body { margin: 0; padding: 24px; max-width: 1400px; margin: auto; }
+    :root {
+      --sidebar-bg: #111827;
+      --sidebar-hover: #1f2937;
+      --sidebar-active: #2563eb;
+      --sidebar-text: #9ca3af;
+      --sidebar-text-active: #ffffff;
+      --main-bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border-color: #e2e8f0;
+      --border-focus: #3b82f6;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font-family); background: var(--main-bg); color: var(--text-main); height: 100vh; display: flex; overflow: hidden; -webkit-font-smoothing: antialiased; }
+
+    /* SIDEBAR */
+    aside { width: 250px; background: var(--sidebar-bg); display: flex; flex-direction: column; flex-shrink: 0; user-select: none; z-index: 10; }
+    .brand { padding: 18px 16px; font-weight: 800; font-size: 14px; letter-spacing: 0.5px; color: white; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #1f2937; }
+    .brand svg { width: 22px; height: 22px; fill: #3b82f6; flex-shrink: 0; }
+    .workspace-badge { background: #1e293b; padding: 8px 12px; margin: 12px; border-radius: 6px; font-size: 11px; color: #cbd5e1; display: flex; justify-content: space-between; align-items: center; border: 1px solid #334155; }
+    .nav-list { list-style: none; padding: 8px 10px; flex: 1; overflow-y: auto; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 6px; color: var(--sidebar-text); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s ease; margin-bottom: 3px; }
+    .nav-item:hover { background: var(--sidebar-hover); color: var(--sidebar-text-active); }
+    .nav-item.active { background: var(--sidebar-active); color: white; font-weight: 600; }
+    .nav-item svg { width: 16px; height: 16px; fill: currentColor; flex-shrink: 0; }
+    .sidebar-footer { padding: 12px 16px; border-top: 1px solid #1f2937; font-size: 11px; color: #64748b; display: flex; justify-content: space-between; align-items: center; }
+
+    /* WORKSPACE & HEADER */
+    main { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+    header { height: 62px; background: white; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; gap: 16px; flex-shrink: 0; }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .header-title { font-size: 17px; font-weight: 700; color: #1e293b; }
+    .file-status-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 20px; background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+    .file-status-badge.connected { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+    .file-status-badge .dot { width: 7px; height: 7px; border-radius: 50%; background: #94a3b8; }
+    .file-status-badge.connected .dot { background: #10b981; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2); }
     
-    /* Toolbar */
-    .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
-    button, label.btn { background: #2563eb; color: white; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; border: none; }
-    button:hover, label.btn:hover { background: #1d4ed8; }
-    .btn-secondary { background: #64748b; }
-    .btn-secondary:hover { background: #475569; }
+    .toolbar { display: flex; gap: 8px; align-items: center; }
+    .content-area { flex: 1; padding: 24px; overflow-y: auto; }
+    .view-panel { display: none; }
+    .view-panel.active { display: block; animation: fadeIn 0.15s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* BUTTONS & INPUTS */
+    button, label.btn { background: var(--primary); color: white; padding: 7px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; border: 1px solid transparent; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s; white-space: nowrap; font-family: inherit; }
+    button:hover, label.btn:hover { background: var(--primary-hover); }
+    .btn-secondary { background: #ffffff; color: #475569; border: 1px solid var(--border-color); }
+    .btn-secondary:hover { background: #f8fafc; color: #1e293b; border-color: #cbd5e1; }
+    .btn-success { background: #10b981; color: white; }
+    .btn-success:hover { background: #059669; }
+    .btn-danger { background: #ef4444; color: white; }
+    .btn-danger:hover { background: #dc2626; }
+    .btn-sm { padding: 4px 8px; font-size: 11px; }
     input[type="file"] { display: none; }
-    input, select, textarea { padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; width: 100%; }
-
-    /* Pipeline */
-    .pipeline { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; align-items: start; }
-    .stage-col { background: #f1f5f9; border-radius: 8px; padding: 12px; min-height: 500px; }
-    .stage-header { display: flex; justify-content: space-between; font-weight: 700; font-size: 12px; text-transform: uppercase; color: #64748b; margin-bottom: 12px; }
+    input, select, textarea { padding: 8px 11px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; width: 100%; font-family: inherit; background: white; color: #0f172a; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
     
-    /* Lead Card */
-    .card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 10px; cursor: pointer; transition: transform 0.1s, box-shadow 0.1s; }
-    .card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-color: #cbd5e1; }
-    .card-title { font-weight: 600; font-size: 15px; margin: 0 0 2px 0; }
-    .card-company { font-size: 13px; color: #64748b; margin-bottom: 8px; }
-    .card-meta { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
-    .card-val { font-weight: 700; color: #0f172a; }
-    .badge { font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
-    .badge-hot { background: #fee2e2; color: #991b1b; }
-    .badge-warm { background: #fef3c7; color: #92400e; }
-    .badge-cold { background: #e0f2fe; color: #075985; }
+    /* SEARCH / FILTER */
+    .filter-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 12px; flex-wrap: wrap; }
+    .search-box { position: relative; width: 320px; }
+    .search-box input { padding-left: 32px; }
+    .search-box svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; fill: #94a3b8; }
 
-    /* Modal */
-    .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(2px); z-index: 50; align-items: center; justify-content: center; }
+    /* DASHBOARD */
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+    .kpi-card { background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 18px; }
+    .kpi-label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 6px; letter-spacing: 0.5px; }
+    .kpi-val { font-size: 26px; font-weight: 800; color: #0f172a; line-height: 1.1; }
+    .kpi-sub { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+    .analytics-split { display: grid; grid-template-columns: 1fr 1.6fr; gap: 20px; }
+    .chart-box { background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .task-list { list-style: none; margin-top: 10px; width: 100%; }
+    .task-item { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; font-size: 13px; cursor: pointer; border-radius: 4px; }
+    .task-item:hover { background: #f8fafc; }
+    
+    /* BADGES */
+    .badge { font-size: 11px; padding: 2px 7px; border-radius: 4px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+    .badge-stage { background: #e2e8f0; color: #334155; }
+    .badge-hot { background: #fee2e2; color: #b91c1c; }
+    .badge-warm { background: #fef3c7; color: #b45309; }
+    .badge-cold { background: #e0f2fe; color: #0369a1; }
+    .badge-custom { background: #f3e8ff; color: #7e22ce; }
+    .badge-gov { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+    .badge-naics { background: #fef9c3; color: #854d0e; }
+	.badge-type { background: #f1f5f9; color: #475569; font-size: 11px; padding: 2px 6px; border-radius: 3px; }
+
+    /* KANBAN */
+    .pipeline { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; align-items: start; min-height: calc(100vh - 200px); }
+    .stage-col { background: #f1f5f9; border-radius: 8px; padding: 12px; min-height: 550px; border: 2px dashed transparent; transition: all 0.15s ease; display: flex; flex-direction: column; }
+    .stage-col.drag-over { background: #e0e7ff; border-color: #3b82f6; box-shadow: inset 0 0 0 1px #3b82f6; }
+    .stage-header { display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 12px; text-transform: uppercase; color: #475569; margin-bottom: 12px; padding: 2px 4px; }
+    .stage-header-title { display: flex; align-items: center; gap: 6px; }
+    .stage-badge-count { background: #cbd5e1; color: #1e293b; padding: 1px 6px; border-radius: 10px; font-size: 10px; }
+    .card-list { flex: 1; display: flex; flex-direction: column; gap: 10px; min-height: 200px; }
+	.stage-list-item { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 8px 12px; border-radius: 6px; border: 1px solid #e2e8f0; }
+    
+    .card { background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 14px; cursor: grab; transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s; user-select: none; }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 4px 8px -1px rgba(0,0,0,0.07); border-color: #cbd5e1; }
+    .card.dragging { opacity: 0.35; transform: scale(0.97); cursor: grabbing; }
+    .card-header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+    .card-title { font-weight: 600; font-size: 14px; color: #0f172a; }
+    .card-company { font-size: 12px; color: #64748b; margin-bottom: 8px; display: flex; align-items: center; gap: 4px; }
+    .card-meta { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 700; padding-top: 8px; border-top: 1px solid #f1f5f9; }
+
+    /* TABLE */
+    .table-container { background: white; border: 1px solid var(--border-color); border-radius: 8px; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+    th { background: #f8fafc; padding: 12px 16px; border-bottom: 1px solid var(--border-color); font-weight: 600; color: #475569; white-space: nowrap; }
+    td { padding: 12px 16px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f8fafc; cursor: pointer; }
+    .link-action { color: #2563eb; text-decoration: none; }
+    .link-action:hover { text-decoration: underline; }
+
+    /* INTEL & ROADMAP VIEW */
+    .intel-grid { display: grid; grid-template-columns: 320px 1fr; gap: 20px; align-items: start; }
+    .intel-sidebar { background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+    .intel-main { display: flex; flex-direction: column; gap: 20px; }
+    .intel-tab-bar { display: flex; gap: 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 10px; }
+    .intel-tab-btn { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; }
+    .intel-tab-btn.active { background: #2563eb; color: white; border-color: #2563eb; font-weight: 600; }
+    .intel-card { background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 18px; margin-bottom: 12px; }
+    .intel-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+    .intel-card-title { font-size: 14px; font-weight: 700; color: #0f172a; }
+    
+    /* ROADMAP MILESTONES */
+    .roadmap-timeline { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 10px; }
+    .roadmap-phase { background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; }
+    .roadmap-phase-title { font-size: 13px; font-weight: 700; color: #1e293b; border-bottom: 2px solid #2563eb; padding-bottom: 6px; margin-bottom: 10px; display: flex; justify-content: space-between; }
+    .roadmap-item { font-size: 12px; padding: 8px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 8px; }
+    .roadmap-item strong { color: #0f172a; display: block; margin-bottom: 2px; }
+
+    /* MODAL */
+    .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.65); backdrop-filter: blur(2px); z-index: 100; align-items: center; justify-content: center; }
     .modal-backdrop.active { display: flex; }
-    .modal-window { background: white; border-radius: 12px; width: 90%; max-width: 900px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); }
-    .modal-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
-    .modal-body { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; overflow-y: auto; }
-    .modal-footer { padding: 12px 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; background: #f8fafc; }
+    .modal-window { background: white; border-radius: 12px; width: 900px; max-width: 95vw; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2); }
+    .modal-header { padding: 18px 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+    .modal-body { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 24px; padding: 24px; overflow-y: auto; }
+    .modal-footer { padding: 14px 24px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .form-group { margin-bottom: 12px; }
-    .form-group label { display: block; font-size: 11px; font-weight: 600; color: #64748b; margin-bottom: 4px; text-transform: uppercase; }
-    
-    /* Timeline / Activity */
-    .timeline { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; max-height: 250px; overflow-y: auto; }
-    .timeline-item { background: #f8fafc; border-left: 3px solid #3b82f6; padding: 8px 12px; border-radius: 0 6px 6px 0; font-size: 12px; }
-    .timeline-meta { font-weight: 600; color: #475569; display: flex; justify-content: space-between; margin-bottom: 4px; }
+    .form-group.full-width { grid-column: span 2; }
+    .form-group label { display: block; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.3px; }
+    .timeline-card { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; font-size: 12px; }
+    .timeline-header { display: flex; justify-content: space-between; font-weight: 600; color: #475569; margin-bottom: 4px; }
+
+    /* TOAST */
+    .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 200; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { background: #1e293b; color: white; padding: 10px 16px; border-radius: 6px; font-size: 13px; display: flex; align-items: center; gap: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); pointer-events: auto; animation: slideIn 0.2s ease-out; }
+    .toast.success { background: #065f46; border-left: 4px solid #10b981; }
+    .toast.warning { background: #78350f; border-left: 4px solid #f59e0b; }
+    .toast.danger { background: #7f1d1d; border-left: 4px solid #ef4444; }
+    @keyframes slideIn { from { transform: translateX(50px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+	
+	/* DARK MODE OVERRIDES */
+    body.dark-theme {
+      --main-bg: #0f172a;
+      --card-bg: #1e293b;
+      --border-color: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    body.dark-theme header, 
+    body.dark-theme .kpi-card, 
+    body.dark-theme .chart-box, 
+    body.dark-theme .card, 
+    body.dark-theme .intel-sidebar, 
+    body.dark-theme .intel-card, 
+    body.dark-theme .table-container, 
+    body.dark-theme .modal-window, 
+    body.dark-theme .settings-card {
+      background: var(--card-bg);
+      border-color: var(--border-color);
+    }
+    body.dark-theme .header-title, 
+    body.dark-theme .card-title, 
+    body.dark-theme .kpi-val, 
+    body.dark-theme .intel-card-title,
+    body.dark-theme .modal-header h3 {
+      color: var(--text-main);
+    }
+    body.dark-theme th, 
+    body.dark-theme tr:hover td, 
+    body.dark-theme .roadmap-item, 
+    body.dark-theme .timeline-card { 
+      background: #0f172a; 
+      color: var(--text-main); 
+    }
+    body.dark-theme input, 
+    body.dark-theme select, 
+    body.dark-theme textarea { 
+      background: #0f172a; 
+      color: var(--text-main); 
+      border-color: #475569; 
+    }
+    body.dark-theme .modal-footer, 
+    body.dark-theme .stage-col { 
+      background: #020617; 
+    }
+    body.dark-theme .btn-secondary { 
+      background: transparent; 
+      color: #cbd5e1; 
+      border-color: #475569; 
+    }
+    body.dark-theme .btn-secondary:hover { 
+      background: #334155; 
+      color: #f8fafc; 
+    }
+    body.dark-theme .file-status-badge {
+      background: #0f172a;
+      border-color: #334155;
+      color: #cbd5e1;
+    }
+	body.dark-theme .badge-type { 
+      background: #334155; 
+      color: #e2e8f0; 
+    }
+	body.dark-theme .stage-list-item {
+      background: #0f172a;
+      border-color: #334155;
+    }
   </style>
 </head>
 <body>
 
-  <div class="toolbar">
-    <label class="btn">
-      📥 Import CSV
-      <input type="file" id="csvFileInput" accept=".csv">
-    </label>
-    <button class="btn" onclick="exportCSV()">💾 Export CSV</button>
-    <button class="btn btn-secondary" onclick="openNewLeadModal()">+ New Lead</button>
-    <input type="text" id="searchInput" placeholder="Search name, company, email..." style="max-width: 250px;" oninput="render()">
-  </div>
+  <!-- SIDEBAR -->
+  <aside>
+    <div class="brand">
+      <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      <span>GOVCON CRM SUITE</span>
+    </div>
+    <div class="workspace-badge">
+      <span>🏢 Federal Capture</span>
+      <span style="font-size: 9px; background: #334155; padding: 2px 5px; border-radius: 3px; font-weight: 600;">v4.5 INTEL</span>
+    </div>
+    <ul class="nav-list">
+      <li class="nav-item active" onclick="switchView('dashboard', this)">
+        <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+        Dashboard
+      </li>
+	  <li class="nav-item" onclick="switchView('intel', this)">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+        Federal Intel & Roadmap
+      </li>
+      <li class="nav-item" onclick="switchView('pipeline', this)">
+        <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>
+        Opportunities (Kanban)
+      </li>
+	  <li class="nav-item" onclick="switchView('calendar', this)">
+        <svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
+        Calendar & Timeline
+      </li>
+      <li class="nav-item" onclick="switchView('list', this)">
+        <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+        All Pursuits (List View)
+      </li>
+      <li class="nav-item" onclick="switchView('directory', this)">
+        <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        Contact Directory
+      </li>
+      <li class="nav-item" onclick="switchView('settings', this)">
+        <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+        Schema & Settings
+      </li>
+    </ul>
+    <div class="sidebar-footer">
+      <span>Zero-Server / Offline</span>
+      <span>🔒 Local Only</span>
+    </div>
+  </aside>
 
-  <div class="pipeline" id="board"></div>
+  <!-- MAIN WORKSPACE -->
+  <main>
+    <header>
+      <div class="header-left">
+        <div class="header-title" id="pageHeading">Dashboard</div>
+        <div class="file-status-badge" id="fileStatusBadge" title="File synchronization status">
+          <span class="dot"></span>
+          <span id="fileStatusText">Local Storage</span>
+        </div>
+      </div>
+      <div class="toolbar">
+        <button class="btn btn-secondary" onclick="openFilePickerOrFallback()" title="Connect or import an existing CSV file">
+          📥 Open / Import CSV
+        </button>
+        <input type="file" id="csvFileInput" accept=".csv">
+        
+        <button class="btn btn-secondary" id="btnDirectSave" onclick="saveDirectToFile()" title="Save directly to file or export CSV">
+          💾 Save / Export CSV
+        </button>
 
-  <!-- Detail & Edit Modal -->
+        <button class="btn" onclick="openLeadModal('NEW')">
+          + New Opportunity
+        </button>
+      </div>
+    </header>
+
+    <div class="content-area">
+      <!-- 1. DASHBOARD VIEW -->
+      <div id="view-dashboard" class="view-panel active">
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">Active Pipeline (TCV)</div>
+            <div class="kpi-val" id="kpi-pipeline-val">$0</div>
+            <div class="kpi-sub">Across open pursuits</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Active Pursuits</div>
+            <div class="kpi-val" id="kpi-opps-count">0</div>
+            <div class="kpi-sub">In capture directory</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Awarded Revenue</div>
+            <div class="kpi-val" id="kpi-won-val">$0</div>
+            <div class="kpi-sub">Prime & Sub awards</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Win Conversion Rate</div>
+            <div class="kpi-val" id="kpi-win-rate">0%</div>
+            <div class="kpi-sub">Awards vs Submissions</div>
+          </div>
+        </div>
+
+        <div class="analytics-split">
+          <div class="chart-box">
+            <div class="kpi-label" style="align-self: flex-start;">Pipeline Conversion Ratio</div>
+            <svg width="170" height="170" viewBox="0 0 36 36" style="margin: 15px 0;">
+              <path stroke="#e2e8f0" stroke-width="3.5" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+              <path id="chart-progress" stroke="#2563eb" stroke-dasharray="0, 100" stroke-width="3.5" stroke-linecap="round" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+              <text x="18" y="20.5" font-size="7" font-weight="700" text-anchor="middle" fill="#0f172a" id="chart-pct-text">0%</text>
+            </svg>
+            <div style="font-size: 13px; font-weight: 600; color: #475569;" id="chart-sub-text">0 of 0 deals won</div>
+          </div>
+          <div class="chart-box" style="align-items: stretch; justify-content: flex-start;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+              <div class="kpi-label" style="margin-bottom:0;">Active Pursuits & Teaming Targets</div>
+              <button class="btn btn-secondary btn-sm" onclick="switchView('pipeline', document.querySelectorAll('.nav-item'))">View Board →</button>
+            </div>
+            <ul class="task-list" id="dashboardTasks"></ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. OPPORTUNITIES VIEW (KANBAN DRAG-AND-DROP) -->
+      <div id="view-pipeline" class="view-panel">
+        <div class="filter-bar">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            <input type="text" id="pipelineSearchInput" placeholder="Filter pipeline by agency, title, or solicitation #..." oninput="renderPipeline(this.value)">
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <span style="font-size:12px; color:#64748b;">Tip: Drag cards between columns to update stage</span>
+          </div>
+        </div>
+        <div class="pipeline" id="board"></div>
+      </div>
+
+      <!-- 3. FEDERAL INTEL MODULE (SAM.GOV & USASPENDING.GOV) -->
+      <div id="view-intel" class="view-panel">
+        
+        <!-- INTEL TAB BAR -->
+        <div class="intel-tab-bar" style="margin-bottom: 20px;">
+          <button class="intel-tab-btn active" onclick="switchIntelTab('query', this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: sub; margin-right: 4px;"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            Query Parameters
+          </button>
+          <button class="intel-tab-btn" onclick="switchIntelTab('opportunities', this)">
+            Active SAM.gov Notices (<span id="samResultCount">0</span>)
+          </button>
+          <button class="intel-tab-btn" onclick="switchIntelTab('usaspending', this)">
+            USAspending Incumbents
+          </button>
+        </div>
+
+        <div class="intel-main" style="display:block;">
+          
+          <!-- TAB 1: QUERY PARAMETERS -->
+          <div id="intel-tab-query">
+            <div class="settings-card">
+              <div class="settings-card-title">Market Research Parameters</div>
+              <div class="settings-card-desc">Define your target criteria. These parameters drive both the SAM.gov active solicitations and the USAspending incumbent data.</div>
+              
+              <div class="form-grid">
+                <div class="form-group full-width">
+                  <label>Keyword Search</label>
+                  <input type="text" id="intelKeyword" placeholder="e.g., Zero Trust, Cloud, DevSecOps...">
+                </div>
+
+                <div class="form-group">
+                  <label>Primary NAICS Code</label>
+                  <select id="intelNaicsSelect"></select>
+                </div>
+
+                <div class="form-group">
+                  <label>Target Federal Agency</label>
+                  <select id="intelAgencySelect"></select>
+                </div>
+
+                <div class="form-group">
+                  <label>Notice Type (Buying Cycle)</label>
+                  <select id="intelNoticeType">
+                    <option value="r" selected>Sources Sought / RFI (Pre-RFP)</option>
+                    <option value="o">Solicitation (Active RFP)</option>
+                    <option value="p">Presolicitation Notice</option>
+                    <option value="k">Combined Synopsis/Solicitation</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>Set-Aside Program</label>
+                  <select id="intelSetAside">
+                    <option value="ALL">Any / Full & Open</option>
+                    <option value="SBA">Total Small Business</option>
+                    <option value="8A">8(a) Small Business</option>
+                    <option value="SDVOSB">SDVOSB (Service-Disabled Vet)</option>
+                    <option value="WOSB">WOSB (Woman-Owned)</option>
+                    <option value="HUBZ">HUBZone</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style="display:flex; gap:12px; margin-top:16px; padding-top:16px; border-top:1px solid var(--border-color); flex-wrap:wrap;">
+                
+                <button class="btn btn-danger" onclick="executeSamQuery()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: sub; margin-right:4px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                  1. Fetch Active SAM.gov Solicitations
+                </button>
+                
+                <button class="btn btn-primary" onclick="executeUsaSpendingQuery()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: sub; margin-right:4px;"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                  2. Fetch USAspending Incumbents
+                </button>
+                
+              </div>
+              <div style="font-size:11px; color:#64748b; margin-top:8px;">
+                <strong>Note:</strong> SAM.gov restricts public API keys to 10 queries per day. USAspending API is unlimited and does not require an API key.
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. SAM.GOV OPPORTUNITIES -->
+          <div id="intel-tab-opportunities" style="display:none;">
+            <div id="samLoadingSpinner" style="display:none; padding:20px; text-align:center; color:#64748b;">
+              Connecting to SAM.gov API and parsing opportunities...
+            </div>
+            <div id="samOpportunitiesList">
+              <div style="color:#64748b; padding:20px; text-align:center;">Run a query or load demo data to view opportunities.</div>
+            </div>
+          </div>
+
+          <!-- 3. USASPENDING INCUMBENTS -->
+          <div id="intel-tab-usaspending" style="display:none;">
+            <div class="settings-card" style="margin-bottom:16px;">
+              <div class="settings-card-title">Top Prime Competitors & Teaming Partners <span id="usaspendingContextLabel" style="color:#2563eb; font-size:12px; font-weight:600; margin-left:8px;">(All)</span></div>
+              <div class="settings-card-desc">USAspending.gov prime contractor obligated volume based on your search parameters. Target large primes for subcontracting and workshare agreements.</div>
+              
+              <table class="schema-table" style="width:100%; border-collapse:collapse; margin-top:12px; font-size:13px; text-align:left;">
+                <thead style="background:var(--main-bg);">
+                  <tr>
+                    <th style="padding:10px; border-bottom:1px solid var(--border-color);">Prime Contractor</th>
+                    <th style="padding:10px; border-bottom:1px solid var(--border-color);">Obligated Value</th>
+                    <th style="padding:10px; border-bottom:1px solid var(--border-color);">Top Agencies</th>
+                    <th style="padding:10px; border-bottom:1px solid var(--border-color);">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="incumbentsTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+	  
+      <!-- 5. ALL PURSUITS (LIST VIEW) -->
+      <div id="view-list" class="view-panel">
+        <div class="filter-bar">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            <input type="text" id="listSearchInput" placeholder="Search opportunities across all columns..." oninput="renderList(this.value)">
+          </div>
+          <div id="listCountBadge" style="font-size:12px; color:#64748b; font-weight:600;"></div>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead id="listTableHead"></thead>
+            <tbody id="listTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 6. CONTACT DIRECTORY VIEW -->
+      <div id="view-directory" class="view-panel">
+        <div class="filter-bar">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            <input type="text" id="directorySearchInput" placeholder="Search people, companies, or emails..." oninput="renderDirectory(this.value)">
+          </div>
+          <div id="directoryCountBadge" style="font-size:12px; color:#64748b; font-weight:600;"></div>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Contact Name</th>
+                <th>Role / Title</th>
+                <th>Company / Agency</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Related Pursuit</th>
+              </tr>
+            </thead>
+            <tbody id="directoryTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+	  
+	  <!-- 7. CALENDAR & GANTT VIEW -->
+      <div id="view-calendar" class="view-panel">
+        <div style="display: flex; flex-direction: column; gap: 24px;">
+          
+          <!-- CRM Pursuit Timeline -->
+          <div class="settings-card">
+            <div class="settings-card-title">Pursuit Timeline & Deadlines</div>
+            <div class="settings-card-desc">Chronological view of your upcoming Next Key Dates across the active pipeline.</div>
+            <div id="ganttContainer" style="margin-top: 16px; display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; padding-right: 8px;">
+              <!-- JS will populate this -->
+            </div>
+          </div>
+
+          <!-- External Public Calendar -->
+          <div class="settings-card" style="flex: 1; display: flex; flex-direction: column;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap: wrap; gap: 12px;">
+              <div>
+                <div class="settings-card-title">External / Team Calendar</div>
+                <div class="settings-card-desc">Embed a public calendar URL (e.g., Google Calendar HTML embed link).</div>
+              </div>
+              <div style="display:flex; gap:8px; align-items: center;">
+                <input type="text" id="publicCalInput" placeholder="Paste calendar embed URL here..." style="width: 320px;">
+                <button class="btn btn-sm" onclick="savePublicCalendar()">Save Link</button>
+              </div>
+            </div>
+            <div id="iframeContainer" style="margin-top: 16px; min-height: 500px; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; background: var(--main-bg);">
+              <!-- Iframe loaded here -->
+            </div>
+          </div>
+
+        </div>
+      </div>
+<!-- 5. SCHEMA BUILDER & SETTINGS VIEW -->
+      <div id="view-settings" class="view-panel">
+        
+        <!-- SETTINGS TAB BAR -->
+        <div class="intel-tab-bar" style="margin-bottom: 20px;">
+          <button class="intel-tab-btn active" onclick="switchSettingsTab('schema', this)">Dynamic Schema Builder</button>
+          <button class="intel-tab-btn" onclick="switchSettingsTab('stages', this)">Stage Manager</button>
+          <button class="intel-tab-btn" onclick="switchSettingsTab('workspace', this)">Local Workspace & Theme</button>
+          <button class="intel-tab-btn" onclick="switchSettingsTab('intel', this)">Federal Intel Settings</button>
+        </div>
+
+        <!-- TAB 1: SCHEMA BUILDER -->
+        <div id="settings-tab-schema">
+          <div class="settings-card">
+            <div class="settings-card-title" style="display:flex; align-items:center; gap:8px; font-size:15px; font-weight:700; margin-bottom:8px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="#2563eb"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+              Dynamic Schema Builder
+            </div>
+            <div style="font-size:12px; color:#64748b; margin-bottom:16px;">
+              Define custom GovCon and opportunity fields. Custom attributes are automatically rendered in modals, the contacts table, and included in CSV serialization.
+            </div>
+
+            <table class="schema-table" style="width:100%; text-align:left; font-size:12px; border-collapse:collapse; margin-bottom:16px;">
+              <thead style="background:#f8fafc;">
+                <tr>
+                  <th style="padding:10px; border-bottom:1px solid var(--border-color);">Field Key</th>
+                  <th style="padding:10px; border-bottom:1px solid var(--border-color);">Label</th>
+                  <th style="padding:10px; border-bottom:1px solid var(--border-color);">Type</th>
+                  <th style="padding:10px; border-bottom:1px solid var(--border-color);">Status</th>
+                  <th style="padding:10px; border-bottom:1px solid var(--border-color);">Action</th>
+                </tr>
+              </thead>
+              <tbody id="schemaFieldsList"></tbody>
+            </table>
+
+            <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+              <div style="font-size:13px; font-weight:700; margin-bottom:10px; color:var(--text-main);">+ Add Custom Field</div>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Field Label</label>
+                  <input type="text" id="new_field_label" placeholder="e.g. Set Aside Code" oninput="autoGenerateFieldKey(this.value)">
+                </div>
+                <div class="form-group">
+                  <label>Field Key (Slug)</label>
+                  <input type="text" id="new_field_key" placeholder="e.g. set_aside_code">
+                </div>
+                <div class="form-group">
+                  <label>Input Type</label>
+                  <select id="new_field_type" onchange="toggleFieldOptionsVisibility(this.value)">
+                    <option value="text">Text</option>
+                    <option value="number">Number</option>
+                    <option value="email">Email</option>
+                    <option value="tel">Phone / Tel</option>
+                    <option value="date">Date</option>
+                    <option value="select">Dropdown (Select)</option>
+                  </select>
+                </div>
+                <div class="form-group" id="field_options_group" style="display:none;">
+                  <label>Dropdown Options</label>
+                  <input type="text" id="new_field_options" placeholder="Option1, Option2, Option3">
+                </div>
+              </div>
+              <button class="btn btn-sm" onclick="addNewCustomField()">Save Field to Schema</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: STAGE MANAGER -->
+        <div id="settings-tab-stages" style="display:none;">
+          <div class="settings-card">
+            <div class="settings-card-title" style="display:flex; align-items:center; gap:8px; font-size:15px; font-weight:700; margin-bottom:8px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="#2563eb"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>
+              GovCon Capture Stages Manager
+            </div>
+            <div style="font-size:12px; color:#64748b; margin-bottom:16px;">
+              Customize capture and proposal workflow stages. Columns on the Kanban board and modal selectors update automatically.
+            </div>
+
+            <div id="stagesListContainer" style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;"></div>
+
+            <div style="display:flex; gap:8px;">
+              <input type="text" id="new_stage_input" placeholder="New stage (e.g. Red Team Review)...">
+              <button class="btn btn-sm" onclick="addNewPipelineStage()">Add Stage</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: LOCAL WORKSPACE CONTROLS -->
+        <div id="settings-tab-workspace" style="display:none;">
+          <div class="settings-card">
+            <div class="settings-card-title" style="display:flex; align-items:center; gap:8px; font-size:15px; font-weight:700; margin-bottom:8px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="#64748b"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></svg>
+              Local Workspace Controls
+            </div>
+            <div style="font-size:12px; color:#64748b; margin-bottom:16px;">
+              Active dataset is stored in browser <code style="background:#f1f5f9; padding:2px 4px; border-radius:3px; color:#0f172a;">localStorage</code>. You can back up to CSV or restore sample GovCon data.
+            </div>
+            
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom: 24px;">
+              <button class="btn btn-secondary btn-sm" onclick="loadSampleData()">🔄 Reload GovCon Data</button>
+              <button class="btn btn-secondary btn-sm" onclick="resetSchemaToDefault()">Reset Schema to Default</button>
+              <button class="btn btn-danger btn-sm" onclick="clearAllData()">⚠️ Clear All Data</button>
+            </div>
+
+            <!-- DARK MODE TOGGLE -->
+            <div style="padding-top: 16px; border-top: 1px solid var(--border-color);">
+              <div style="font-size:13px; font-weight:700; margin-bottom:10px; color:var(--text-main);">UI Preferences</div>
+              <button class="btn btn-secondary btn-sm" onclick="toggleDarkMode()">🌗 Toggle Dark / Light Theme</button>
+            </div>
+          </div>
+        </div>
+		
+		<!-- TAB 4: FEDERAL INTEL SETTINGS -->
+        <div id="settings-tab-intel" style="display:none;">
+          
+          <div class="settings-card">
+            <div class="settings-card-title">SAM.gov API Configuration</div>
+            <div class="form-group" style="margin-top:12px;">
+              <label>SAM.gov API Key</label>
+              <input type="password" id="settingsSamApiKey" placeholder="Paste your SAM.gov API key..." onchange="saveSamApiKey(this.value)">
+              <div style="font-size:10px; color:#64748b; margin-top:3px;">Saved locally in browser localStorage</div>
+            </div>
+          </div>
+
+          <div class="settings-card" style="margin-top:20px;">
+            <div class="settings-card-title">Target NAICS Codes</div>
+            <div style="font-size:12px; color:#64748b; margin-bottom:12px;">Manage the NAICS codes available in your market research queries.</div>
+            <div id="naicsListContainer" style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;"></div>
+            
+            <div style="display:flex; gap:8px;">
+              <input type="text" id="new_naics_code" placeholder="Code (e.g. 541513)" style="width:140px;">
+              <input type="text" id="new_naics_desc" placeholder="Description...">
+              <button class="btn btn-sm" onclick="addNewNaics()">Add NAICS</button>
+            </div>
+          </div>
+
+          <div class="settings-card" style="margin-top:20px;">
+            <div class="settings-card-title">Target Federal Agencies</div>
+            <div style="font-size:12px; color:#64748b; margin-bottom:12px;">Manage the agency acronyms and names for SAM.gov filtering.</div>
+            <div id="agenciesListContainer" style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;"></div>
+            
+            <div style="display:flex; gap:8px;">
+              <input type="text" id="new_agency_code" placeholder="Acronym (e.g. DOE)" style="width:140px;">
+              <input type="text" id="new_agency_desc" placeholder="Full Agency Name...">
+              <button class="btn btn-sm" onclick="addNewAgency()">Add Agency</button>
+            </div>
+          </div>
+        </div>
+      </div>
+  </main>
+
+  <!-- OPPORTUNITY DETAIL & EDIT MODAL -->
   <div class="modal-backdrop" id="leadModal">
     <div class="modal-window">
       <div class="modal-header">
-        <h3 style="margin: 0;" id="modalHeading">Lead Details</h3>
-        <button style="background:transparent; color:#64748b; font-size:18px;" onclick="closeModal()">✕</button>
+        <div>
+          <h3 style="margin: 0; font-size: 16px; font-weight: 700;" id="modalHeading">Opportunity Details</h3>
+          <span style="font-size: 12px; color: #64748b;" id="modalSubHeading"></span>
+        </div>
+        <button style="background:transparent; color:#64748b; font-size:20px; border:none; padding:4px 8px; cursor:pointer;" onclick="closeModal()">✕</button>
       </div>
       <div class="modal-body">
-        <!-- Left: Core Info -->
         <div>
-          <div class="form-group">
-            <label>Full Name</label>
-            <input type="text" id="m_name">
-          </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-            <div class="form-group">
-              <label>Company</label>
-              <input type="text" id="m_company">
-            </div>
-            <div class="form-group">
-              <label>Job Title</label>
-              <input type="text" id="m_title">
-            </div>
-          </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-            <div class="form-group">
-              <label>Email</label>
-              <input type="email" id="m_email">
-            </div>
-            <div class="form-group">
-              <label>Phone</label>
-              <input type="tel" id="m_phone">
-            </div>
-          </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-            <div class="form-group">
-              <label>Deal Value ($)</label>
-              <input type="number" id="m_value">
-            </div>
-            <div class="form-group">
-              <label>Stage</label>
-              <select id="m_stage">
-                <option value="Lead">Lead</option>
-                <option value="Qualified">Qualified</option>
-                <option value="Proposal">Proposal</option>
-                <option value="Closed-Won">Closed-Won</option>
-              </select>
-            </div>
-          </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-            <div class="form-group">
-              <label>Priority</label>
-              <select id="m_priority">
-                <option value="Hot">🔥 Hot</option>
-                <option value="Warm">⚡ Warm</option>
-                <option value="Cold">❄️ Cold</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Target Close</label>
-              <input type="date" id="m_close">
-            </div>
-          </div>
+          <label style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:12px; display:block; letter-spacing:0.5px;">Deal & Contract Attributes</label>
+          <div class="form-grid" id="dynamicFormFields"></div>
         </div>
 
-        <!-- Right: Comms & Activity -->
-        <div style="border-left: 1px solid #e2e8f0; padding-left: 20px;">
-          <h4 style="margin: 0 0 8px 0; font-size: 14px;">Log Communication</h4>
-          <div style="display: flex; gap: 6px; margin-bottom: 6px;">
-            <select id="act_type" style="width: 110px;">
-              <option value="Call">📞 Call</option>
-              <option value="Email">✉️ Email</option>
-              <option value="Meeting">👥 Meeting</option>
+        <div style="border-left: 1px solid var(--border-color); padding-left: 20px; display:flex; flex-direction:column;">
+          <label style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px;">Capture Log / Milestone</label>
+          <div style="display:flex; gap:6px; margin: 8px 0 14px 0;">
+            <select id="act_type" style="width:110px; flex-shrink:0;">
+              <option value="RFI">📄 RFI Response</option>
+              <option value="Meeting">👥 BD / OSDBU</option>
+              <option value="Call">📞 Call / POC</option>
+              <option value="Teaming">🤝 Teaming NDA</option>
               <option value="Note">📝 Note</option>
             </select>
-            <input type="text" id="act_text" placeholder="Summary of interaction...">
-            <button class="btn" style="padding: 6px 12px;" onclick="addActivity()">Log</button>
+            <input type="text" id="act_text" placeholder="Add capture note..." onkeydown="if(event.key==='Enter') addActivity()">
+            <button class="btn btn-sm" onclick="addActivity()">Log</button>
           </div>
 
-          <h4 style="margin: 16px 0 4px 0; font-size: 13px; color: #64748b;">Activity History</h4>
-          <div class="timeline" id="activityTimeline"></div>
+          <label style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; margin-top:4px; letter-spacing:0.5px;">Capture Timeline</label>
+          <div id="modalTimeline" style="flex:1; max-height: 280px; overflow-y: auto; margin-top: 8px; display: flex; flex-direction: column; gap: 8px; padding-right:4px;"></div>
         </div>
       </div>
       <div class="modal-footer">
-        <button style="background: #ef4444;" onclick="deleteActiveLead()">Delete Lead</button>
+        <button class="btn btn-danger" id="btnModalDelete" onclick="deleteActiveLead()">Delete Pursuit</button>
         <div style="display: flex; gap: 8px;">
-          <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+          <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
           <button class="btn" onclick="saveActiveLead()">Save Changes</button>
         </div>
       </div>
     </div>
   </div>
 
-  <script>
-    const STAGES = ['Lead', 'Qualified', 'Proposal', 'Closed-Won'];
-    let activeLeadId = null;
+  <!-- TOAST CONTAINER -->
+  <div class="toast-container" id="toastContainer"></div>
 
-    let leads = JSON.parse(localStorage.getItem('crm_leads_v2')) || [
-      {
-        id: '1', name: 'Alex Rivera', company: 'Nexus Ltd', title: 'VP Operations',
-        email: 'alex@nexus.io', phone: '+1 555-0192', value: '18000', stage: 'Proposal',
-        priority: 'Hot', target_close: '2026-09-15',
-        activities: [
-          { date: '2026-08-20 10:30', type: 'Call', text: 'Reviewed initial SLA terms' },
-          { date: '2026-08-22 14:15', type: 'Email', text: 'Sent updated pricing sheet' }
-        ]
-      },
-      {
-        id: '2', name: 'Sarah Chen', company: 'Skyline Inc', title: 'Chief Architect',
-        email: 'sarah@skyline.co', phone: '+1 555-0843', value: '45000', stage: 'Qualified',
-        priority: 'Warm', target_close: '2026-10-01',
-        activities: [
-          { date: '2026-08-18 09:00', type: 'Meeting', text: 'Demoed offline-first database workflow' }
-        ]
-      }
+  <script>
+    // =========================================================================
+    // 1. STATE & CONSTANTS 
+    // =========================================================================
+    const DEFAULT_STAGES = [
+      'Sources Sought / RFI',
+      'Capture & Teaming',
+      'Proposal Prep (Pink/Red)',
+      'Submitted / Eval',
+      'Closed-Won'
     ];
 
-    function saveState() {
-      localStorage.setItem('crm_leads_v2', JSON.stringify(leads));
-      render();
+	const DEFAULT_FIELD_SCHEMA = [
+      { key: 'name', label: 'Opportunity Title / Scope', type: 'text', required: true, system: true },
+      { key: 'company', label: 'Agency / Sub-Agency', type: 'text', required: true, system: true },
+      { key: 'title', label: 'Solicitation / Notice #', type: 'text', system: true },
+      { key: 'naics', label: 'NAICS Code(s)', type: 'text', system: true },
+      { key: 'psc', label: 'PSC Code(s)', type: 'text', system: true },
+      { key: 'co_name', label: 'Contracting Officer Name', type: 'text', system: true },
+      { key: 'email', label: 'Contracting Officer Email', type: 'email', system: true },
+      { key: 'pm_name', label: 'Program Manager Name', type: 'text', system: true },
+      { key: 'pm_email', label: 'Program Manager Email', type: 'email', system: true },
+      { key: 'value', label: 'Ceiling Value (TCV $)', type: 'number', system: true },
+      { key: 'stage', label: 'Capture Stage', type: 'select', system: true, getOptions: () => STAGES },
+      { key: 'priority', label: 'Priority / pWin', type: 'select', system: true, options: ['Hot (pWin > 70%)', 'Warm (pWin 40-70%)', 'Cold (pWin < 40%)'] },
+      { key: 'target_close', label: 'Next Key Date', type: 'date', system: true }
+    ];
+    
+	const DEFAULT_NAICS = [
+      { code: '541512', desc: 'Computer Systems Design' },
+      { code: '541511', desc: 'Custom Computer Programming' },
+      { code: '541519', desc: 'Other Computer Related Services' },
+      { code: '541330', desc: 'Engineering Services' },
+      { code: '541611', desc: 'Administrative & General Mgmt' }
+    ];
+
+    const DEFAULT_AGENCIES = [
+      { code: 'ALL', desc: 'All Federal Agencies' },
+      { code: 'DOD', desc: 'Department of Defense (DoD)' },
+      { code: 'VA', desc: 'Department of Veterans Affairs (VA)' },
+      { code: 'DHS', desc: 'Department of Homeland Security (DHS)' },
+      { code: 'HHS', desc: 'Health and Human Services (HHS)' },
+      { code: 'GSA', desc: 'General Services Admin (GSA)' }
+    ];
+
+    let INTEL_NAICS = JSON.parse(localStorage.getItem('crm_suite_naics')) || DEFAULT_NAICS;
+    let INTEL_AGENCIES = JSON.parse(localStorage.getItem('crm_suite_agencies')) || DEFAULT_AGENCIES;
+	
+    let STAGES = JSON.parse(localStorage.getItem('crm_suite_stages')) || DEFAULT_STAGES;
+    let customSchemaFields = JSON.parse(localStorage.getItem('crm_suite_schema')) || [];
+    let FIELD_SCHEMA = buildActiveSchema();
+    let leads = JSON.parse(localStorage.getItem('crm_suite_data')) || SAMPLE_GOVCON_LEADS;
+    let samApiKey = localStorage.getItem('sam_gov_api_key') || '';
+    
+    let activeLeadId = null;
+    let fileHandle = null;
+    let isDraggingCard = false;
+    let currentDragLeadId = null;
+
+    function buildActiveSchema() {
+      const merged = [...DEFAULT_FIELD_SCHEMA];
+      customSchemaFields.forEach(cf => {
+        if (!merged.some(f => f.key === cf.key)) {
+          merged.push({
+            key: cf.key,
+            label: cf.label,
+            type: cf.type,
+            options: cf.options || [],
+            system: false
+          });
+        }
+      });
+      return merged;
     }
 
-    function render() {
-      const filter = document.getElementById('searchInput').value.toLowerCase();
+    // =========================================================================
+    // 2. STATE PERSISTENCE & VIEW SWITCHING
+    // =========================================================================
+    function saveState() {
+	  localStorage.setItem('crm_suite_naics', JSON.stringify(INTEL_NAICS));
+      localStorage.setItem('crm_suite_agencies', JSON.stringify(INTEL_AGENCIES));
+      localStorage.setItem('crm_suite_data', JSON.stringify(leads));
+      localStorage.setItem('crm_suite_stages', JSON.stringify(STAGES));
+      localStorage.setItem('crm_suite_schema', JSON.stringify(customSchemaFields));
+      
+      FIELD_SCHEMA = buildActiveSchema();
+      
+      renderDashboard();
+      renderPipeline(document.getElementById('pipelineSearchInput')?.value || '');
+      renderList(document.getElementById('listSearchInput')?.value || '');
+      renderDirectory(document.getElementById('directorySearchInput')?.value || '');
+      renderSettings();
+	  renderIntelSettings();
+	  renderCalendar();
+    }
+
+    function switchView(viewName, element) {
+      document.querySelectorAll('.view-panel').forEach(v => v.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      
+      const targetView = document.getElementById(`view-${viewName}`);
+      if (targetView) targetView.classList.add('active');
+      if (element) element.classList.add('active');
+      
+      const titles = {
+        dashboard: 'Dashboard',
+        pipeline: 'Capture Opportunities (Kanban)',
+        intel: 'Federal Market Intel & Roadmap',
+        list: 'All Pursuits (List View)',
+        directory: 'Contact & Prime Directory',
+        calendar: 'Calendar & Pursuit Timeline',
+        settings: 'Schema & Settings'
+      };
+      document.getElementById('pageHeading').innerText = titles[viewName] || 'Dashboard';
+      
+      if (viewName === 'intel') {
+        initIntelView();
+      }
+    }
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `<span>${type === 'success' ? '✓' : type === 'warning' ? '⚠️' : 'ℹ️'}</span><span>${message}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.transition = 'opacity 0.3s, transform 0.3s';
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(50px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    // =========================================================================
+    // 3. DASHBOARD RENDERING
+    // =========================================================================
+    function renderDashboard() {
+      const totalVal = leads.reduce((sum, l) => sum + Number(l.value || 0), 0);
+      const wonLeads = leads.filter(l => l.stage === 'Closed-Won');
+      const wonVal = wonLeads.reduce((sum, l) => sum + Number(l.value || 0), 0);
+      const winRate = leads.length > 0 ? Math.round((wonLeads.length / leads.length) * 100) : 0;
+
+      document.getElementById('kpi-pipeline-val').innerText = `$${totalVal.toLocaleString()}`;
+      document.getElementById('kpi-opps-count').innerText = leads.length;
+      document.getElementById('kpi-won-val').innerText = `$${wonVal.toLocaleString()}`;
+      document.getElementById('kpi-win-rate').innerText = `${winRate}%`;
+
+      document.getElementById('chart-progress').setAttribute('stroke-dasharray', `${winRate}, 100`);
+      document.getElementById('chart-pct-text').textContent = `${winRate}%`;
+      document.getElementById('chart-sub-text').textContent = `${wonLeads.length} of ${leads.length} pursuits won`;
+
+      const taskContainer = document.getElementById('dashboardTasks');
+      taskContainer.innerHTML = '';
+      if (leads.length === 0) {
+        taskContainer.innerHTML = '<div style="color:#94a3b8; font-size:13px; padding:12px;">No active captures. Use Federal Intel to pull notices from SAM.gov.</div>';
+        return;
+      }
+
+      leads.slice(0, 6).forEach(l => {
+        const li = document.createElement('li');
+        li.className = 'task-item';
+        li.onclick = () => openLeadModal(l.id);
+
+        let priorityBadge = '<span class="badge badge-gov">Capture</span>';
+        if (l.priority?.includes('Hot')) priorityBadge = '<span class="badge badge-hot">🔥 Hot Pursuit</span>';
+        else if (l.priority?.includes('Warm')) priorityBadge = '<span class="badge badge-warm">⚡ Warm</span>';
+
+        li.innerHTML = `
+          <div>
+            <div style="font-weight:600; color:#0f172a; display:flex; align-items:center; gap:6px;">
+              ${l.name} <span style="color:#64748b; font-weight:normal;">• ${l.company}</span> ${priorityBadge}
+            </div>
+            <div style="font-size:11px; color:#64748b; margin-top:2px;">
+              Stage: <strong>${l.stage}</strong> | TCV: <strong>$${Number(l.value || 0).toLocaleString()}</strong>
+              ${l.target_close ? ` | Due: ${l.target_close}` : ''}
+            </div>
+          </div>
+          <span class="badge badge-stage">${(l.activities || []).length} logs</span>
+        `;
+        taskContainer.appendChild(li);
+      });
+    }
+
+    // =========================================================================
+    // 4. KANBAN PIPELINE (DRAG-AND-DROP)
+    // =========================================================================
+    function renderPipeline(filter = '') {
       const board = document.getElementById('board');
       board.innerHTML = '';
+      const needle = filter.toLowerCase().trim();
 
       STAGES.forEach(stage => {
-        const stageLeads = leads.filter(l => l.stage === stage && 
-          (l.name.toLowerCase().includes(filter) || 
-           l.company.toLowerCase().includes(filter) || 
-           (l.email && l.email.toLowerCase().includes(filter)))
-        );
+        const stageLeads = leads.filter(l => {
+          const inStage = l.stage === stage;
+          if (!inStage) return false;
+          if (!needle) return true;
+          return (l.name || '').toLowerCase().includes(needle) ||
+                 (l.company || '').toLowerCase().includes(needle) ||
+                 (l.title || '').toLowerCase().includes(needle);
+        });
+
+        const stageVal = stageLeads.reduce((s, l) => s + Number(l.value || 0), 0);
 
         const col = document.createElement('div');
         col.className = 'stage-col';
+        col.dataset.stage = stage;
+        
+        col.addEventListener('dragover', handleColDragOver);
+        col.addEventListener('dragenter', handleColDragEnter);
+        col.addEventListener('dragleave', handleColDragLeave);
+        col.addEventListener('drop', handleColDrop);
+
         col.innerHTML = `
           <div class="stage-header">
-            <span>${stage}</span>
-            <span>(${stageLeads.length})</span>
+            <div class="stage-header-title">
+              <span>${stage}</span>
+              <span class="stage-badge-count">${stageLeads.length}</span>
+            </div>
+            <span style="color:#2563eb; font-weight:700;">$${stageVal.toLocaleString()}</span>
           </div>
+          <div class="card-list"></div>
         `;
+
+        const cardList = col.querySelector('.card-list');
 
         stageLeads.forEach(lead => {
           const card = document.createElement('div');
           card.className = 'card';
-          card.onclick = () => openEditModal(lead.id);
+          card.draggable = true;
+          card.dataset.leadId = lead.id;
 
-          const priorityClass = lead.priority === 'Hot' ? 'badge-hot' : lead.priority === 'Warm' ? 'badge-warm' : 'badge-cold';
+          card.addEventListener('dragstart', handleCardDragStart);
+          card.addEventListener('dragend', handleCardDragEnd);
+          
+          card.addEventListener('click', () => {
+            if (isDraggingCard) return;
+            openLeadModal(lead.id);
+          });
 
           card.innerHTML = `
-            <div class="card-title">${lead.name}</div>
-            <div class="card-company">${lead.company} ${lead.title ? '• ' + lead.title : ''}</div>
+            <div class="card-header-row">
+              <span class="card-title">${lead.name}</span>
+            </div>
+            <div class="card-company">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="#94a3b8"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/></svg>
+              ${lead.company}
+            </div>
             <div class="card-meta">
-              <span class="card-val">$${Number(lead.value || 0).toLocaleString()}</span>
-              <span class="badge ${priorityClass}">${lead.priority || 'Warm'}</span>
+              <span>$${Number(lead.value || 0).toLocaleString()}</span>
+              <span style="font-size:11px; color:#64748b; font-weight:normal;">
+                ${lead.target_close ? `🎯 Due: ${lead.target_close}` : (lead.title || '')}
+              </span>
             </div>
           `;
-          col.appendChild(card);
+
+          cardList.appendChild(card);
         });
 
         board.appendChild(col);
       });
     }
 
-    function openEditModal(id) {
-      activeLeadId = id;
-      const lead = leads.find(l => l.id === id);
-      if (!lead) return;
+    function handleCardDragStart(e) {
+      currentDragLeadId = this.dataset.leadId;
+      isDraggingCard = true;
+      e.dataTransfer.setData('text/plain', currentDragLeadId);
+      e.dataTransfer.effectAllowed = 'move';
+      this.classList.add('dragging');
+    }
 
-      document.getElementById('modalHeading').innerText = `Edit: ${lead.name}`;
-      document.getElementById('m_name').value = lead.name || '';
-      document.getElementById('m_company').value = lead.company || '';
-      document.getElementById('m_title').value = lead.title || '';
-      document.getElementById('m_email').value = lead.email || '';
-      document.getElementById('m_phone').value = lead.phone || '';
-      document.getElementById('m_value').value = lead.value || '0';
-      document.getElementById('m_stage').value = lead.stage || 'Lead';
-      document.getElementById('m_priority').value = lead.priority || 'Warm';
-      document.getElementById('m_close').value = lead.target_close || '';
+    function handleCardDragEnd() {
+      this.classList.remove('dragging');
+      document.querySelectorAll('.stage-col').forEach(c => c.classList.remove('drag-over'));
+      setTimeout(() => { isDraggingCard = false; currentDragLeadId = null; }, 50);
+    }
+
+    function handleColDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    }
+
+    function handleColDragEnter(e) {
+      e.preventDefault();
+      this.classList.add('drag-over');
+    }
+
+    function handleColDragLeave(e) {
+      if (!this.contains(e.relatedTarget)) {
+        this.classList.remove('drag-over');
+      }
+    }
+
+    function handleColDrop(e) {
+      e.preventDefault();
+      this.classList.remove('drag-over');
+      const leadId = e.dataTransfer.getData('text/plain') || currentDragLeadId;
+      const targetStage = this.dataset.stage;
+
+      if (!leadId || !targetStage) return;
+
+      const lead = leads.find(l => l.id === leadId);
+      if (lead && lead.stage !== targetStage) {
+        const oldStage = lead.stage;
+        lead.stage = targetStage;
+        if (!lead.activities) lead.activities = [];
+        lead.activities.push({
+          date: new Date().toISOString().slice(0, 10),
+          type: 'Note',
+          text: `Capture stage progressed from "${oldStage}" to "${targetStage}".`
+        });
+        saveState();
+        showToast(`Moved "${lead.name}" to ${targetStage}`);
+      }
+    }
+
+    // =========================================================================
+    // 5. FEDERAL INTEL & ROADMAP MODULE (SAM.GOV & USASPENDING.GOV)
+    // =========================================================================
+    function initIntelView() {
+      document.getElementById('samApiKeyInput').value = samApiKey;
+      
+    }
+
+    function saveSamApiKey(key) {
+      samApiKey = key.trim();
+      localStorage.setItem('sam_gov_api_key', samApiKey);
+      showToast('SAM.gov API key saved in local storage');
+    }
+
+    function switchIntelTab(tabName, btn) {
+      btn.parentElement.querySelectorAll('.intel-tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      
+      document.getElementById('intel-tab-query').style.display = tabName === 'query' ? 'block' : 'none';
+      document.getElementById('intel-tab-opportunities').style.display = tabName === 'opportunities' ? 'block' : 'none';
+      document.getElementById('intel-tab-usaspending').style.display = tabName === 'usaspending' ? 'block' : 'none';
+    }
+
+    async function executeSamQuery() {
+      const apiKey = samApiKey || document.getElementById('settingsSamApiKey')?.value.trim();
+      const keyword = document.getElementById('intelKeyword').value.trim();
+      const naics = document.getElementById('intelNaicsSelect').value;
+      const ptype = document.getElementById('intelNoticeType').value;
+      
+      if (!apiKey) {
+        showToast('Please enter your SAM.gov API key in the settings tab', 'warning');
+        return;
+      }
+
+      if (!confirm('SAM.gov limits public keys to 10 queries per day. Execute this query?')) {
+        return;
+      }
+
+      const oppsTabBtn = document.querySelectorAll('.intel-tab-btn')[1];
+      switchIntelTab('opportunities', oppsTabBtn);
+
+      const spinner = document.getElementById('samLoadingSpinner');
+      const listContainer = document.getElementById('samOpportunitiesList');
+      spinner.style.display = 'block';
+      listContainer.innerHTML = '';
+
+      try {
+        const today = new Date();
+        const pastDate = new Date();
+        pastDate.setDate(today.getDate() - 30);
+        
+        const postedFrom = `${(pastDate.getMonth()+1).toString().padStart(2,'0')}/${pastDate.getDate().toString().padStart(2,'0')}/${pastDate.getFullYear()}`;
+        const postedTo = `${(today.getMonth()+1).toString().padStart(2,'0')}/${today.getDate().toString().padStart(2,'0')}/${today.getFullYear()}`;
+
+        let url = `https://api.sam.gov/opportunities/v2/search?api_key=${encodeURIComponent(apiKey)}&ncode=${naics}&ptype=${ptype}&postedFrom=${postedFrom}&postedTo=${postedTo}&limit=15`;
+        if (keyword) url += `&q=${encodeURIComponent(keyword)}`;
+        
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`SAM.gov HTTP ${response.status}`);
+
+        const data = await response.json();
+        const opps = (data.opportunitiesData || []).map(o => ({
+          noticeId: o.noticeId,
+          title: o.title,
+          solicitationNumber: o.solicitationNumber || 'N/A',
+          agency: (o.fullParentPathName || o.department || 'Federal Agency'),
+          office: o.office || '',
+          type: o.type || 'Notice',
+          postedDate: o.postedDate || '',
+          responseDeadLine: o.responseDeadLine || '',
+          naicsCode: o.naicsCode || naics,
+          setAside: o.typeOfSetAsideDescription || 'Full & Open',
+          description: o.description || 'See SAM.gov for full details.',
+          contactEmail: (o.pointOfContact && o.pointOfContact[0]?.email) || ''
+        }));
+
+        spinner.style.display = 'none';
+        if (opps.length === 0) {
+          listContainer.innerHTML = '<div style="color:#64748b; padding:20px;">No opportunities found for the selected criteria.</div>';
+        } else {
+          renderSamOpportunities(opps);
+          showToast(`Retrieved ${opps.length} notices from SAM.gov`);
+        }
+      } catch (err) {
+        spinner.style.display = 'none';
+        listContainer.innerHTML = '<div style="color:#ef4444; padding:20px;">API Call Blocked. This is usually due to browser CORS restrictions on the SAM API or hitting the daily rate limit.</div>';
+        console.warn('SAM.gov fetch issue:', err);
+      }
+    }
+
+    async function executeUsaSpendingQuery() {
+      const keyword = document.getElementById('intelKeyword').value.trim();
+      const naics = document.getElementById('intelNaicsSelect').value;
+      
+      document.getElementById('usaspendingContextLabel').innerText = `(${keyword ? '"' + keyword + '" in ' : ''}NAICS ${naics})`;
+      
+      const usaTabBtn = document.querySelectorAll('.intel-tab-btn')[2];
+      switchIntelTab('usaspending', usaTabBtn);
+      
+      const tbody = document.getElementById('incumbentsTableBody');
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#64748b; padding:20px;">Querying USAspending API...</td></tr>';
+
+      try {
+        // Build the JSON payload for USAspending's POST endpoint
+        const payload = {
+          filters: {
+            naics_codes: { require: [naics] },
+            // Default to the last 3 calendar years (2024-2026)
+            time_period: [{ start_date: '2024-01-01', end_date: '2026-12-31' }]
+          },
+          limit: 15
+        };
+
+        // Pass the keyword into the 'keywords' array to search contract descriptions
+        if (keyword) {
+          payload.filters.keywords = [keyword];
+        }
+
+        const response = await fetch('https://api.usaspending.gov/api/v2/search/spending_by_category/recipient/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) throw new Error(`USAspending HTTP ${response.status}`);
+        const data = await response.json();
+        
+        tbody.innerHTML = '';
+        
+        if (!data.results || data.results.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#64748b; padding:20px;">No prime contractors found matching this criteria.</td></tr>';
+          return;
+        }
+
+        data.results.forEach(inc => {
+          // USAspending amounts are raw numbers, format them to a clean dollar string
+          const formattedValue = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(inc.amount);
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><strong>${inc.name}</strong></td>
+            <td style="color:#2563eb; font-weight:700;">${formattedValue}</td>
+            <td>Multiple (NAICS ${naics})</td>
+            <td>
+              <button class="btn btn-secondary btn-sm" onclick="addPrimeToContacts('${inc.name.replace(/'/g, "\\'")}', 'Selected Target Agency')">+ Add Partner</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+        
+        showToast(`Retrieved ${data.results.length} incumbents from USAspending`);
+        
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#ef4444; padding:20px;">Failed to connect to USAspending API.</td></tr>';
+        console.warn('USAspending fetch issue:', err);
+      }
+    }
+
+    function renderSamOpportunities(opps) {
+      const container = document.getElementById('samOpportunitiesList');
+      const countEl = document.getElementById('samResultCount');
+      container.innerHTML = '';
+      countEl.innerText = opps.length;
+
+      opps.forEach(o => {
+        const card = document.createElement('div');
+        card.className = 'intel-card';
+        card.innerHTML = `
+          <div class="intel-card-header">
+            <div>
+              <div class="intel-card-title">${o.title}</div>
+              <div style="font-size:12px; color:#64748b; margin-top:2px;">
+                <strong>${o.agency}</strong> ${o.office ? `(${o.office})` : ''}
+              </div>
+            </div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <span class="badge badge-gov">${o.type}</span>
+              <span class="badge badge-naics">NAICS ${o.naicsCode}</span>
+              <span class="badge badge-stage">${o.setAside}</span>
+            </div>
+          </div>
+          <div style="font-size:12px; color:#334155; margin: 8px 0; line-height:1.4;">
+            ${o.description.slice(0, 240)}...
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #f1f5f9; padding-top:8px; font-size:11px; color:#64748b;">
+            <span>Solicitation: <strong>${o.solicitationNumber}</strong> | Due: <strong style="color:#0f172a;">${o.responseDeadLine || 'TBD'}</strong></span>
+            <button class="btn btn-sm" onclick='pushSamNoticeToPipeline(${JSON.stringify(o)})'>+ Push to Pipeline</button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function renderIncumbentsTable(incumbents) {
+      const tbody = document.getElementById('incumbentsTableBody');
+      tbody.innerHTML = '';
+      incumbents.forEach(inc => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${inc.prime}</strong></td>
+          <td style="color:#2563eb; font-weight:700;">${inc.value}</td>
+          <td>${inc.agency}</td>
+          <td>
+            <button class="btn btn-secondary btn-sm" onclick="addPrimeToContacts('${inc.prime}', '${inc.agency}')">+ Add Partner</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function pushSamNoticeToPipeline(notice) {
+      const exists = leads.some(l => l.title === notice.solicitationNumber && notice.solicitationNumber !== 'N/A');
+      if (exists) {
+        showToast('This opportunity is already in your pipeline', 'warning');
+        return;
+      }
+
+      const newLead = {
+        id: Date.now().toString(),
+        name: notice.title,
+        company: notice.agency,
+        title: notice.solicitationNumber,
+        email: notice.contactEmail || '',
+        phone: '',
+        value: 1500000, // Estimated baseline
+        stage: notice.type.includes('Sources Sought') || notice.type.includes('RFI') ? 'Sources Sought / RFI' : 'Capture & Teaming',
+        priority: 'Warm (pWin 40-70%)',
+        target_close: notice.responseDeadLine ? notice.responseDeadLine.slice(0, 10) : '',
+        activities: [
+          {
+            date: new Date().toISOString().slice(0, 10),
+            type: 'RFI',
+            text: `Imported from SAM.gov Notice (${notice.noticeId || notice.solicitationNumber}). Set-Aside: ${notice.setAside}.`
+          }
+        ]
+      };
+
+      leads.unshift(newLead);
+      saveState();
+      showToast(`Pushed "${notice.title.slice(0, 30)}..." into Pipeline!`);
+    }
+
+    function addPrimeToContacts(primeName, targetAgency) {
+      const newLead = {
+        id: Date.now().toString(),
+        name: `${primeName} (Federal Capture Team)`,
+        company: primeName,
+        title: 'Teaming Partner / Prime',
+        email: `teaming@${primeName.toLowerCase().replace(/[^a-z]/g, '')}.com`,
+        phone: '',
+        value: 0,
+        stage: 'Capture & Teaming',
+        priority: 'Hot (pWin > 70%)',
+        activities: [
+          {
+            date: new Date().toISOString().slice(0, 10),
+            type: 'Teaming',
+            text: `Added from USAspending market analysis as target prime for ${targetAgency}.`
+          }
+        ]
+      };
+      leads.push(newLead);
+      saveState();
+      showToast(`Added ${primeName} to directory`);
+    }
+
+    // =========================================================================
+    // 6. LIST VIEW & CONTACT DIRECTORY
+    // =========================================================================
+    function renderList(filter = '') {
+      const thead = document.getElementById('listTableHead');
+      const tbody = document.getElementById('listTableBody');
+      const countBadge = document.getElementById('listCountBadge');
+      
+      const needle = filter.toLowerCase().trim();
+      const filteredLeads = leads.filter(l => {
+        if (!needle) return true;
+        return Object.values(l).some(val => {
+          if (typeof val === 'string') return val.toLowerCase().includes(needle);
+          if (typeof val === 'number') return val.toString().includes(needle);
+          return false;
+        });
+      });
+
+      countBadge.innerText = `Showing ${filteredLeads.length} of ${leads.length} pursuits`;
+
+      const visibleFields = FIELD_SCHEMA.filter(f => f.key !== 'id');
+      thead.innerHTML = `<tr>${visibleFields.map(f => `<th>${f.label}</th>`).join('')}</tr>`;
+
+      tbody.innerHTML = '';
+      if (filteredLeads.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="${visibleFields.length}" style="text-align:center; color:#94a3b8; padding:24px;">No records found matching filter.</td></tr>`;
+        return;
+      }
+
+      filteredLeads.forEach(l => {
+        const tr = document.createElement('tr');
+        tr.onclick = () => openLeadModal(l.id);
+
+        const cells = visibleFields.map(f => {
+          const val = l[f.key];
+          if (val === undefined || val === null || val === '') return `<td style="color:#94a3b8;">-</td>`;
+          
+          if (f.key === 'name') return `<td><strong>${val}</strong></td>`;
+          if (f.key === 'email' || f.key === 'pm_email') return `<td><a class="link-action" href="mailto:${val}" onclick="event.stopPropagation();">${val}</a></td>`;
+          if (f.key === 'phone') return `<td><a class="link-action" href="tel:${val}" onclick="event.stopPropagation();">${val}</a></td>`;
+          if (f.key === 'value') return `<td>$${Number(val).toLocaleString()}</td>`;
+          if (f.key === 'stage') return `<td><span class="badge badge-stage">${val}</span></td>`;
+          return `<td>${val}</td>`;
+        });
+
+        tr.innerHTML = cells.join('');
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderDirectory(filter = '') {
+      const tbody = document.getElementById('directoryTableBody');
+      const countBadge = document.getElementById('directoryCountBadge');
+      const needle = filter.toLowerCase().trim();
+      
+      let extractedContacts = [];
+      
+      // Dynamically pull people out of the active leads
+      leads.forEach(l => {
+        if (l.co_name || l.email || l.phone) {
+          extractedContacts.push({
+            name: l.co_name || 'Unspecified POC',
+            role: 'Contracting Officer / POC',
+            company: l.company || 'Unknown',
+            email: l.email || '',
+            phone: l.phone || '',
+            opp: l.name || '-',
+            leadId: l.id
+          });
+        }
+        if (l.pm_name || l.pm_email) {
+          extractedContacts.push({
+            name: l.pm_name || 'Unspecified PM',
+            role: 'Program Manager',
+            company: l.company || 'Unknown',
+            email: l.pm_email || '',
+            phone: '', // Phone is usually shared in this schema
+            opp: l.name || '-',
+            leadId: l.id
+          });
+        }
+      });
+      
+      const filteredContacts = extractedContacts.filter(c => {
+        if (!needle) return true;
+        return Object.values(c).some(val => typeof val === 'string' && val.toLowerCase().includes(needle));
+      });
+
+      countBadge.innerText = `Showing ${filteredContacts.length} contacts extracted from pursuits`;
+      tbody.innerHTML = '';
+      
+      if (filteredContacts.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:24px;">No contacts found.</td></tr>`;
+        return;
+      }
+
+      filteredContacts.forEach(c => {
+        const tr = document.createElement('tr');
+        // Clicking a contact opens their associated deal modal
+        tr.onclick = () => openLeadModal(c.leadId); 
+        tr.innerHTML = `
+          <td><strong>${c.name}</strong></td>
+          <td><span class="badge badge-stage">${c.role}</span></td>
+          <td>${c.company}</td>
+          <td>${c.email ? `<a class="link-action" href="mailto:${c.email}" onclick="event.stopPropagation();">${c.email}</a>` : '<span style="color:#94a3b8;">-</span>'}</td>
+          <td>${c.phone ? `<a class="link-action" href="tel:${c.phone}" onclick="event.stopPropagation();">${c.phone}</a>` : '<span style="color:#94a3b8;">-</span>'}</td>
+          <td style="font-size: 11px; color: #64748b;">${c.opp.slice(0, 45)}${c.opp.length > 45 ? '...' : ''}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // =========================================================================
+    // 7. MODAL & DYNAMIC FORM BUILDER
+    // =========================================================================
+    function openLeadModal(leadId) {
+      activeLeadId = leadId;
+      const isNew = leadId === 'NEW';
+      const lead = isNew ? {} : leads.find(l => l.id === leadId) || {};
+
+      document.getElementById('modalHeading').innerText = isNew ? 'Create New Capture Pursuit' : `Edit: ${lead.name || 'Pursuit'}`;
+      document.getElementById('modalSubHeading').innerText = isNew ? 'Add GovCon solicitation or teaming target' : `ID: ${lead.id || '-'} | Updated live`;
+      document.getElementById('btnModalDelete').style.display = isNew ? 'none' : 'block';
+
+      const formContainer = document.getElementById('dynamicFormFields');
+      formContainer.innerHTML = '';
+
+      FIELD_SCHEMA.forEach(field => {
+        const group = document.createElement('div');
+        group.className = 'form-group';
+        if (field.key === 'name') group.classList.add('full-width');
+
+        const label = document.createElement('label');
+        label.innerText = field.label + (field.required ? ' *' : '');
+        group.appendChild(label);
+
+        let input;
+        if (field.type === 'select') {
+          input = document.createElement('select');
+          const options = typeof field.getOptions === 'function' ? field.getOptions() : (field.options || []);
+          options.forEach(opt => {
+            const optElem = document.createElement('option');
+            optElem.value = opt;
+            optElem.innerText = opt;
+            if ((lead[field.key] || '') === opt) optElem.selected = true;
+            input.appendChild(optElem);
+          });
+        } else {
+          input = document.createElement('input');
+          input.type = field.type;
+          input.value = lead[field.key] !== undefined ? lead[field.key] : '';
+        }
+        input.id = `dyn_${field.key}`;
+        group.appendChild(input);
+        formContainer.appendChild(group);
+      });
 
       renderTimeline(lead.activities || []);
       document.getElementById('leadModal').classList.add('active');
     }
 
-    function openNewLeadModal() {
-      activeLeadId = 'NEW';
-      document.getElementById('modalHeading').innerText = 'New Lead';
-      ['m_name', 'm_company', 'm_title', 'm_email', 'm_phone', 'm_value', 'm_close', 'act_text'].forEach(id => {
-        document.getElementById(id).value = '';
-      });
-      document.getElementById('m_stage').value = 'Lead';
-      document.getElementById('m_priority').value = 'Warm';
-      renderTimeline([]);
-      document.getElementById('leadModal').classList.add('active');
-    }
-
     function renderTimeline(activities) {
-      const container = document.getElementById('activityTimeline');
-      container.innerHTML = activities.length === 0 ? '<div style="color:#94a3b8; font-size:12px;">No activity logged yet.</div>' : '';
-      
-      activities.slice().reverse().forEach(act => {
-        const item = document.createElement('div');
-        item.className = 'timeline-item';
-        item.innerHTML = `
-          <div class="timeline-meta">
-            <span>${act.type}</span>
-            <span>${act.date}</span>
+      const container = document.getElementById('modalTimeline');
+      container.innerHTML = '';
+      if (!activities || activities.length === 0) {
+        container.innerHTML = '<div style="color:#94a3b8; font-size:12px; padding:10px 0;">No capture activities logged.</div>';
+        return;
+      }
+
+      activities.slice().reverse().forEach(a => {
+        const card = document.createElement('div');
+        card.className = 'timeline-card';
+        card.innerHTML = `
+          <div class="timeline-header">
+            <span>[${a.type}]</span>
+            <span style="font-size:11px; color:#94a3b8;">${a.date}</span>
           </div>
-          <div>${act.text}</div>
+          <div style="color:#1e293b;">${a.text}</div>
         `;
-        container.appendChild(item);
+        container.appendChild(card);
       });
     }
 
     function addActivity() {
-      const text = document.getElementById('act_text').value.trim();
+      const textInput = document.getElementById('act_text');
+      const text = textInput.value.trim();
       if (!text) return;
+
       const type = document.getElementById('act_type').value;
-      const date = new Date().toISOString().slice(0, 16).replace('T', ' ');
+      const date = new Date().toISOString().slice(0, 10);
 
       if (activeLeadId === 'NEW') {
-        alert('Please save the lead first before attaching activity.');
+        alert('Please save the pursuit before logging capture milestones.');
         return;
       }
 
@@ -294,31 +1540,52 @@
       if (lead) {
         if (!lead.activities) lead.activities = [];
         lead.activities.push({ date, type, text });
-        document.getElementById('act_text').value = '';
+        textInput.value = '';
         renderTimeline(lead.activities);
         saveState();
+        showToast('Capture milestone logged');
       }
     }
 
     function saveActiveLead() {
-      const data = {
-        name: document.getElementById('m_name').value.trim() || 'Unnamed Lead',
-        company: document.getElementById('m_company').value.trim() || 'N/A',
-        title: document.getElementById('m_title').value.trim(),
-        email: document.getElementById('m_email').value.trim(),
-        phone: document.getElementById('m_phone').value.trim(),
-        value: document.getElementById('m_value').value || '0',
-        stage: document.getElementById('m_stage').value,
-        priority: document.getElementById('m_priority').value,
-        target_close: document.getElementById('m_close').value
-      };
+      const data = {};
+      let hasError = false;
+
+      FIELD_SCHEMA.forEach(f => {
+        const el = document.getElementById(`dyn_${f.key}`);
+        if (el) {
+          data[f.key] = el.value.trim();
+          if (f.required && !data[f.key]) {
+            el.style.borderColor = '#ef4444';
+            hasError = true;
+          } else if (el) {
+            el.style.borderColor = '#cbd5e1';
+          }
+        }
+      });
+
+      if (hasError) {
+        showToast('Please fill out required fields (*)', 'warning');
+        return;
+      }
 
       if (activeLeadId === 'NEW') {
-        leads.push({ id: Date.now().toString(), ...data, activities: [] });
+        const newLead = {
+          id: Date.now().toString(),
+          ...data,
+          activities: [{
+            date: new Date().toISOString().slice(0, 10),
+            type: 'Note',
+            text: 'Capture pursuit initialized in pipeline.'
+          }]
+        };
+        leads.unshift(newLead);
+        showToast(`Created pursuit "${newLead.name}"`);
       } else {
         const idx = leads.findIndex(l => l.id === activeLeadId);
         if (idx !== -1) {
           leads[idx] = { ...leads[idx], ...data };
+          showToast(`Updated "${leads[idx].name}"`);
         }
       }
 
@@ -328,66 +1595,548 @@
 
     function deleteActiveLead() {
       if (activeLeadId !== 'NEW') {
-        leads = leads.filter(l => l.id !== activeLeadId);
-        saveState();
+        const lead = leads.find(l => l.id === activeLeadId);
+        if (confirm(`Delete "${lead?.name || 'this pursuit'}"?`)) {
+          leads = leads.filter(l => l.id !== activeLeadId);
+          showToast('Pursuit removed', 'danger');
+          closeModal();
+          saveState();
+        }
       }
-      closeModal();
     }
 
     function closeModal() {
       document.getElementById('leadModal').classList.remove('active');
+      activeLeadId = null;
     }
 
-    // CSV Parsing (Supports nested activities string: "Date~Type~Text;Date~Type~Text")
+    // =========================================================================
+    // 8. FILE SYSTEM ACCESS API & CSV SERIALIZATION
+    // =========================================================================
+    function updateFileStatusUI() {
+      const badge = document.getElementById('fileStatusBadge');
+      const text = document.getElementById('fileStatusText');
+      const btn = document.getElementById('btnDirectSave');
+
+      if (fileHandle) {
+        badge.classList.add('connected');
+        text.innerText = `Connected: ${fileHandle.name}`;
+        btn.innerHTML = `💾 Overwrite ${fileHandle.name}`;
+      } else {
+        badge.classList.remove('connected');
+        text.innerText = 'Local Storage';
+        btn.innerHTML = '💾 Save / Export CSV';
+      }
+    }
+
+    function generateCSVText() {
+      const headers = ['id', ...FIELD_SCHEMA.map(f => f.key), 'activities_raw'];
+      const csvRows = leads.map(l => {
+        const actRaw = (l.activities || []).map(a => `${a.date}~${a.type}~${(a.text || '').replace(/~/g, '-').replace(/;;/g, ';')}`).join(';;');
+        return headers.map(h => {
+          let val = h === 'activities_raw' ? actRaw : (l[h] !== undefined ? l[h] : '');
+          val = String(val).replace(/"/g, '""');
+          return `"${val}"`;
+        }).join(',');
+      });
+
+      return [headers.join(','), ...csvRows].join('\r\n');
+    }
+
+    async function saveDirectToFile() {
+      const csvText = generateCSVText();
+
+      if ('showSaveFilePicker' in window) {
+        try {
+          if (!fileHandle) {
+            fileHandle = await window.showSaveFilePicker({
+              suggestedName: `govcon_crm_${new Date().toISOString().slice(0,10)}.csv`,
+              types: [{
+                description: 'CSV File (*.csv)',
+                accept: { 'text/csv': ['.csv'] }
+              }]
+            });
+            updateFileStatusUI();
+          }
+
+          const writable = await fileHandle.createWritable();
+          await writable.write(csvText);
+          await writable.close();
+
+          showToast(`Directly saved ${leads.length} records to ${fileHandle.name}`);
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') return;
+          console.warn('File System write error:', err);
+        }
+      }
+
+      exportCSVBlob();
+    }
+
+    function exportCSVBlob() {
+      const csvText = generateCSVText();
+      const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `govcon_crm_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast(`Exported ${leads.length} pursuits to CSV`);
+    }
+
+    async function openFilePickerOrFallback() {
+      if ('showOpenFilePicker' in window) {
+        try {
+          const [handle] = await window.showOpenFilePicker({
+            types: [{
+              description: 'CSV Files (*.csv)',
+              accept: { 'text/csv': ['.csv'] }
+            }],
+            multiple: false
+          });
+
+          const file = await handle.getFile();
+          const text = await file.text();
+          parseAndLoadCSV(text);
+
+          fileHandle = handle;
+          updateFileStatusUI();
+          showToast(`Connected & loaded ${file.name}`);
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') return;
+        }
+      }
+
+      document.getElementById('csvFileInput').click();
+    }
+
+    function parseCSVRows(csvText) {
+      const rows = [];
+      let currentRow = [];
+      let currentField = '';
+      let insideQuotes = false;
+
+      for (let i = 0; i < csvText.length; i++) {
+        const char = csvText[i];
+        const nextChar = csvText[i + 1];
+
+        if (char === '"') {
+          if (insideQuotes && nextChar === '"') {
+            currentField += '"';
+            i++;
+          } else {
+            insideQuotes = !insideQuotes;
+          }
+        } else if (char === ',' && !insideQuotes) {
+          currentRow.push(currentField.trim());
+          currentField = '';
+        } else if ((char === '\r' || char === '\n') && !insideQuotes) {
+          if (char === '\r' && nextChar === '\n') i++;
+          currentRow.push(currentField.trim());
+          if (currentRow.some(c => c.length > 0)) rows.push(currentRow);
+          currentRow = [];
+          currentField = '';
+        } else {
+          currentField += char;
+        }
+      }
+
+      if (currentField || currentRow.length > 0) {
+        currentRow.push(currentField.trim());
+        if (currentRow.some(c => c.length > 0)) rows.push(currentRow);
+      }
+
+      return rows;
+    }
+
+    function parseAndLoadCSV(csvContent) {
+      const rows = parseCSVRows(csvContent);
+      if (rows.length < 2) return;
+
+      const rawHeaders = rows[0];
+      const headers = rawHeaders.map(h => h.toLowerCase().replace(/[^a-z0-9_]/g, '_'));
+
+      let schemaChanged = false;
+      headers.forEach((h, idx) => {
+        if (!h || h === 'id' || h === 'activities_raw' || h === 'activities') return;
+        const exists = FIELD_SCHEMA.some(f => f.key === h);
+        if (!exists) {
+          customSchemaFields.push({
+            key: h,
+            label: rawHeaders[idx] || h,
+            type: 'text',
+            options: [],
+            system: false
+          });
+          schemaChanged = true;
+        }
+      });
+
+      if (schemaChanged) {
+        FIELD_SCHEMA = buildActiveSchema();
+        localStorage.setItem('crm_suite_schema', JSON.stringify(customSchemaFields));
+      }
+
+      leads = rows.slice(1).map((vals, rIdx) => {
+        const obj = { id: (Date.now() + rIdx).toString(), activities: [] };
+        headers.forEach((h, i) => { if (h && vals[i] !== undefined) obj[h] = vals[i]; });
+        if (obj.stage && !STAGES.includes(obj.stage)) STAGES.push(obj.stage);
+        if (obj.activities_raw) {
+          obj.activities = obj.activities_raw.split(';;').map(entry => {
+            const parts = entry.split('~');
+            return parts.length >= 3 ? { date: parts[0], type: parts, text: parts.slice(2).join('~') } : null;
+          }).filter(Boolean);
+        }
+        return obj;
+      });
+
+      saveState();
+      showToast(`Imported ${leads.length} GovCon records`);
+    }
+
     document.getElementById('csvFileInput').addEventListener('change', function(e) {
       const file = e.target.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = function(evt) {
-        const rows = evt.target.result.split(/\r?\n/).filter(r => r.trim());
-        const headers = rows[0].split(',').map(h => h.replace(/^"|"$/g, '').trim().toLowerCase());
-
-        leads = rows.slice(1).map((rowStr, idx) => {
-          // Basic CSV regex to handle commas inside quotes
-          const match = rowStr.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
-          const vals = match.map(v => v.replace(/^"|"$/g, '').replace(/""/g, '"').trim());
-          
-          let obj = { id: Date.now().toString() + idx, activities: [] };
-          headers.forEach((h, i) => obj[h] = vals[i] || '');
-          
-          if (obj.activities_raw) {
-            obj.activities = obj.activities_raw.split(';;').map(entry => {
-              const [date, type, text] = entry.split('~');
-              return { date, type, text };
-            }).filter(a => a.text);
-          }
-          return obj;
-        });
-        saveState();
-      };
+      reader.onload = (evt) => parseAndLoadCSV(evt.target.result);
       reader.readAsText(file);
     });
 
-    // CSV Export
-    function exportCSV() {
-      const headers = ['id', 'name', 'company', 'title', 'email', 'phone', 'value', 'stage', 'priority', 'target_close', 'activities_raw'];
-      const csvRows = leads.map(l => {
-        const rawActivities = (l.activities || []).map(a => `${a.date}~${a.type}~${a.text}`).join(';;');
-        const copy = { ...l, activities_raw: rawActivities };
-        return headers.map(h => `"${(copy[h] || '').toString().replace(/"/g, '""')}"`).join(',');
+    // =========================================================================
+    // 9. SETTINGS & SCHEMA MANAGEMENT
+    // =========================================================================
+    function renderSettings() {
+      const fieldsList = document.getElementById('schemaFieldsList');
+      fieldsList.innerHTML = '';
+
+      FIELD_SCHEMA.forEach(f => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><code>${f.key}</code></td>
+          <td><strong>${f.label}</strong></td>
+          <td><span class="badge-type">${f.type}</span></td>
+          <td>${f.system ? '<span class="badge" style="background:#e2e8f0; color:#475569;">Core System</span>' : '<span class="badge badge-custom">Custom</span>'}</td>
+          <td>
+            ${f.system ? '<span style="color:#94a3b8; font-size:11px;">Protected</span>' : "<button class='btn btn-danger btn-sm' onclick='deleteCustomField(\"" + f.key + "\")'>Delete</button>"}
+          </td>
+        `;
+        fieldsList.appendChild(tr);
       });
 
-      const csvContent = [headers.join(','), ...csvRows].join('\r\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = `crm_export_${new Date().toISOString().slice(0,10)}.csv`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const stagesList = document.getElementById('stagesListContainer');
+      stagesList.innerHTML = '';
+
+      STAGES.forEach(stage => {
+        const stageCount = leads.filter(l => l.stage === stage).length;
+        const div = document.createElement('div');
+        div.className = 'stage-list-item';
+        div.innerHTML = `
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-weight:600; font-size:13px;">${stage}</span>
+            <span style="font-size:11px; color:#64748b;">(${stageCount} pursuits)</span>
+          </div>
+          <div style="display:flex; gap:4px;">
+            ${STAGES.length > 1 ? `<button class="btn btn-secondary btn-sm" onclick="removePipelineStage('${stage}')">✕</button>` : ''}
+          </div>
+        `;
+        stagesList.appendChild(div);
+      });
     }
 
-    render();
+    function autoGenerateFieldKey(label) {
+      document.getElementById('new_field_key').value = label.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+    }
+
+    function toggleFieldOptionsVisibility(type) {
+      document.getElementById('field_options_group').style.display = type === 'select' ? 'block' : 'none';
+    }
+
+    function addNewCustomField() {
+      const label = document.getElementById('new_field_label').value.trim();
+      let key = document.getElementById('new_field_key').value.trim().toLowerCase();
+      const type = document.getElementById('new_field_type').value;
+      const optionsRaw = document.getElementById('new_field_options').value.trim();
+
+      if (!label) return;
+      if (!key) key = label.toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+      if (FIELD_SCHEMA.some(f => f.key === key)) {
+        showToast(`Field "${key}" already exists!`, 'warning');
+        return;
+      }
+
+      const options = type === 'select' ? optionsRaw.split(',').map(o => o.trim()).filter(Boolean) : [];
+      customSchemaFields.push({ key, label, type, options, system: false });
+      
+      document.getElementById('new_field_label').value = '';
+      document.getElementById('new_field_key').value = '';
+      document.getElementById('new_field_options').value = '';
+      
+      saveState();
+      showToast(`Added field "${label}"`);
+    }
+
+    function deleteCustomField(key) {
+      if (confirm(`Remove custom field "${key}"?`)) {
+        customSchemaFields = customSchemaFields.filter(f => f.key !== key);
+        saveState();
+        showToast(`Removed field "${key}"`);
+      }
+    }
+
+    function addNewPipelineStage() {
+      const input = document.getElementById('new_stage_input');
+      const stageName = input.value.trim();
+      if (!stageName || STAGES.includes(stageName)) return;
+
+      STAGES.push(stageName);
+      input.value = '';
+      saveState();
+      showToast(`Added stage "${stageName}"`);
+    }
+
+    function removePipelineStage(stageName) {
+      if (confirm(`Remove stage "${stageName}"? Deals will be moved to "${STAGES[0]}".`)) {
+        leads.forEach(l => { if (l.stage === stageName) l.stage = STAGES[0]; });
+        STAGES = STAGES.filter(s => s !== stageName);
+        saveState();
+        showToast(`Removed stage "${stageName}"`);
+      }
+    }
+
+    function loadSampleData() {
+      leads = JSON.parse(JSON.stringify(SAMPLE_GOVCON_LEADS));
+      saveState();
+      showToast('Loaded GovCon sample dataset');
+    }
+
+    function resetSchemaToDefault() {
+      customSchemaFields = [];
+      STAGES = [...DEFAULT_STAGES];
+      saveState();
+      showToast('Reset schema and stages');
+    }
+
+    function clearAllData() {
+      if (confirm('Clear all deal records?')) {
+        leads = [];
+        saveState();
+        showToast('All records cleared', 'danger');
+      }
+    }
+
+    // =========================================================================
+    // 10. INITIALIZATION
+    // =========================================================================
+    updateFileStatusUI();
+    saveState();
+	
+	// =========================================================================
+    // 11. SETTINGS TABS & DARK MODE
+    // =========================================================================
+    function switchSettingsTab(tabName, btn) {
+      // Manage active button state
+      btn.parentElement.querySelectorAll('.intel-tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      
+      // Hide all settings tabs
+      document.getElementById('settings-tab-schema').style.display = 'none';
+      document.getElementById('settings-tab-stages').style.display = 'none';
+      document.getElementById('settings-tab-workspace').style.display = 'none';
+	  document.getElementById('settings-tab-intel').style.display = 'none';
+      
+      // Show targeted tab
+      document.getElementById(`settings-tab-${tabName}`).style.display = 'block';
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-theme');
+      const isDark = document.body.classList.contains('dark-theme');
+      localStorage.setItem('crm_suite_theme', isDark ? 'dark' : 'light');
+      showToast(isDark ? 'Dark mode enabled' : 'Light mode enabled');
+    }
+
+    // Run this immediately on load to check if the user previously set dark mode
+    if (localStorage.getItem('crm_suite_theme') === 'dark') {
+      document.body.classList.add('dark-theme');
+    }
+	function renderIntelSettings() {
+      // 1. Populate NAICS in Settings Tab
+      const naicsList = document.getElementById('naicsListContainer');
+      if (naicsList) {
+        naicsList.innerHTML = '';
+        INTEL_NAICS.forEach(n => {
+          const div = document.createElement('div');
+          div.className = 'stage-list-item';
+          div.innerHTML = `
+            <div style="font-weight:600; font-size:13px; color:var(--text-main);">${n.code} - <span style="font-weight:normal; color:var(--text-muted);">${n.desc}</span></div>
+            <button class="btn btn-secondary btn-sm" onclick="removeNaics('${n.code}')">✕</button>
+          `;
+          naicsList.appendChild(div);
+        });
+      }
+
+      // 2. Populate Agencies in Settings Tab
+      const agencyList = document.getElementById('agenciesListContainer');
+      if (agencyList) {
+        agencyList.innerHTML = '';
+        INTEL_AGENCIES.forEach(a => {
+          const div = document.createElement('div');
+          div.className = 'stage-list-item';
+          div.innerHTML = `
+            <div style="font-weight:600; font-size:13px; color:var(--text-main);">${a.code} - <span style="font-weight:normal; color:var(--text-muted);">${a.desc}</span></div>
+            ${a.code !== 'ALL' ? `<button class="btn btn-secondary btn-sm" onclick="removeAgency('${a.code}')">✕</button>` : '<div></div>'}
+          `;
+          agencyList.appendChild(div);
+        });
+      }
+
+      // 3. Populate Select Dropdowns in Intel Query Tab
+      const naicsSelect = document.getElementById('intelNaicsSelect');
+      if (naicsSelect) {
+        naicsSelect.innerHTML = '';
+        INTEL_NAICS.forEach(n => {
+          const opt = document.createElement('option');
+          opt.value = n.code;
+          opt.innerText = `${n.code} - ${n.desc}`;
+          naicsSelect.appendChild(opt);
+        });
+      }
+
+      const agencySelect = document.getElementById('intelAgencySelect');
+      if (agencySelect) {
+        agencySelect.innerHTML = '';
+        INTEL_AGENCIES.forEach(a => {
+          const opt = document.createElement('option');
+          opt.value = a.code;
+          opt.innerText = a.desc;
+          agencySelect.appendChild(opt);
+        });
+      }
+      
+      // Keep API Key Input in sync
+      const samInput = document.getElementById('settingsSamApiKey');
+      if (samInput) samInput.value = samApiKey;
+    }
+
+    function addNewNaics() {
+      const code = document.getElementById('new_naics_code').value.trim();
+      const desc = document.getElementById('new_naics_desc').value.trim();
+      if (!code || !desc) return;
+      if (INTEL_NAICS.some(n => n.code === code)) {
+        showToast('NAICS code already exists', 'warning');
+        return;
+      }
+      INTEL_NAICS.push({ code, desc });
+      document.getElementById('new_naics_code').value = '';
+      document.getElementById('new_naics_desc').value = '';
+      saveState();
+      showToast(`Added NAICS ${code}`);
+    }
+
+    function removeNaics(code) {
+      INTEL_NAICS = INTEL_NAICS.filter(n => n.code !== code);
+      saveState();
+      showToast(`Removed NAICS ${code}`);
+    }
+
+    function addNewAgency() {
+      const code = document.getElementById('new_agency_code').value.trim();
+      const desc = document.getElementById('new_agency_desc').value.trim();
+      if (!code || !desc) return;
+      if (INTEL_AGENCIES.some(a => a.code === code)) {
+        showToast('Agency acronym already exists', 'warning');
+        return;
+      }
+      INTEL_AGENCIES.push({ code, desc });
+      document.getElementById('new_agency_code').value = '';
+      document.getElementById('new_agency_desc').value = '';
+      saveState();
+      showToast(`Added Agency ${code}`);
+    }
+
+    function removeAgency(code) {
+      if (code === 'ALL') return; // Protect the 'ALL' baseline filter
+      INTEL_AGENCIES = INTEL_AGENCIES.filter(a => a.code !== code);
+      saveState();
+      showToast(`Removed Agency ${code}`);
+    }
+	// =========================================================================
+    // 12. CALENDAR & TIMELINE MANAGEMENT
+    // =========================================================================
+    function renderCalendar() {
+      // 1. Build the CRM Pursuit Timeline
+      const container = document.getElementById('ganttContainer');
+      if (container) {
+        container.innerHTML = '';
+        
+        // Filter for leads that actually have a target_close date, and sort them chronologically
+        const datedLeads = leads
+          .filter(l => l.target_close)
+          .sort((a, b) => new Date(a.target_close) - new Date(b.target_close));
+        
+        if (datedLeads.length === 0) {
+          container.innerHTML = '<div style="color:var(--text-muted); font-size:13px; padding:12px; text-align:center;">No upcoming dates found in your pipeline. Set a "Next Key Date" on a pursuit to see it here.</div>';
+        } else {
+          datedLeads.forEach(l => {
+            const div = document.createElement('div');
+            div.className = 'stage-list-item'; 
+            div.style.borderLeft = '4px solid var(--primary)';
+            div.style.cursor = 'pointer';
+            // Clicking a timeline item opens its modal directly
+            div.onclick = () => { openLeadModal(l.id); }; 
+            
+            div.innerHTML = `
+              <div style="display:flex; flex-direction:column; gap:4px;">
+                <span style="font-weight:700; font-size:13px; color:var(--text-main);">${l.name}</span>
+                <span style="font-size:11px; color:var(--text-muted);">${l.company} | Stage: ${l.stage}</span>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-weight:700; color:var(--text-main);">${l.target_close}</div>
+                <div style="font-size:11px; color:var(--text-muted);">${l.priority || '-'}</div>
+              </div>
+            `;
+            container.appendChild(div);
+          });
+        }
+      }
+
+      // 2. Load the Public Calendar Iframe
+      const calUrl = localStorage.getItem('crm_public_cal') || '';
+      const inputEl = document.getElementById('publicCalInput');
+      const iframeContainer = document.getElementById('iframeContainer');
+      
+      if (inputEl) inputEl.value = calUrl;
+      
+      if (iframeContainer) {
+        if (calUrl) {
+          // Wrap the URL in an iframe
+          iframeContainer.innerHTML = `<iframe src="${calUrl}" style="border: 0" width="100%" height="100%" frameborder="0" scrolling="yes"></iframe>`;
+        } else {
+          iframeContainer.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--text-muted);">No public calendar link configured. Paste an embed URL above and click Save.</div>';
+        }
+      }
+    }
+
+    function savePublicCalendar() {
+      const inputVal = document.getElementById('publicCalInput').value.trim();
+      
+      // Basic extraction if the user accidentally pastes the entire iframe code instead of just the URL
+      let finalUrl = inputVal;
+      if (inputVal.includes('<iframe') && inputVal.includes('src=')) {
+        const match = inputVal.match(/src="([^"]+)"/);
+        if (match && match[1]) finalUrl = match[1];
+      }
+
+      localStorage.setItem('crm_public_cal', finalUrl);
+      showToast('Calendar link saved');
+      renderCalendar();
+    }
   </script>
 </body>
 </html>
