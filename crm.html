@@ -830,7 +830,7 @@
     let STAGES = JSON.parse(localStorage.getItem('crm_suite_stages')) || DEFAULT_STAGES;
     let customSchemaFields = JSON.parse(localStorage.getItem('crm_suite_schema')) || [];
     let FIELD_SCHEMA = buildActiveSchema();
-    let leads = JSON.parse(localStorage.getItem('crm_suite_data')) || SAMPLE_GOVCON_LEADS;
+    let leads = JSON.parse(localStorage.getItem('crm_suite_data')) || [];
     let samApiKey = localStorage.getItem('sam_gov_api_key') || '';
     
     let activeLeadId = null;
