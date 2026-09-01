@@ -804,8 +804,28 @@
       { code: 'GSA', desc: 'General Services Admin (GSA)' }
     ];
 
-    let INTEL_NAICS = JSON.parse(localStorage.getItem('crm_suite_naics')) || DEFAULT_NAICS;
-    let INTEL_AGENCIES = JSON.parse(localStorage.getItem('crm_suite_agencies')) || DEFAULT_AGENCIES;
+    //let INTEL_NAICS = JSON.parse(localStorage.getItem('crm_suite_naics')) || DEFAULT_NAICS;
+    //let INTEL_AGENCIES = JSON.parse(localStorage.getItem('crm_suite_agencies')) || DEFAULT_AGENCIES;
+	
+	// Safely retrieve NAICS (Self-Healing)
+    let INTEL_NAICS = DEFAULT_NAICS;
+    try {
+      const storedNaics = localStorage.getItem('crm_suite_naics');
+      if (storedNaics && storedNaics !== 'undefined' && storedNaics !== 'null') {
+        const parsed = JSON.parse(storedNaics);
+        if (Array.isArray(parsed) && parsed.length > 0) INTEL_NAICS = parsed;
+      }
+    } catch (e) { console.warn('Resetting corrupted NAICS data'); }
+
+    // Safely retrieve Agencies (Self-Healing)
+    let INTEL_AGENCIES = DEFAULT_AGENCIES;
+    try {
+      const storedAgencies = localStorage.getItem('crm_suite_agencies');
+      if (storedAgencies && storedAgencies !== 'undefined' && storedAgencies !== 'null') {
+        const parsed = JSON.parse(storedAgencies);
+        if (Array.isArray(parsed) && parsed.length > 0) INTEL_AGENCIES = parsed;
+      }
+    } catch (e) { console.warn('Resetting corrupted Agency data'); }  
 	
     let STAGES = JSON.parse(localStorage.getItem('crm_suite_stages')) || DEFAULT_STAGES;
     let customSchemaFields = JSON.parse(localStorage.getItem('crm_suite_schema')) || [];
