@@ -1,0 +1,27 @@
+# Part 1 (30 points): Ethical Analysis of a Contemporary Cyber Operations Case
+Select one contemporary cyber operations case from the last five years and use that same case throughout Parts 1–4. Choose a case that is sufficiently rich to support ethical, legal, rights-based, operational, and international-law analysis. If the case does not reasonably support all dimensions of the assignment, select a different case.
+The case that has been selected is the story “Russian State Sponsored Hackers Use Claude to Rebuild Malware After Detection”.
+
+Analyze the Case
+## 1. Stakeholders
+	The primary stakeholders are the 20+ organizations that were compromised via the cyber operation.  The notable highlights from the article include; the entire North African central account server(containing national identities and business registrations), Ukrainian & European government officials and the compromised hotels.  These are the parties that have been directly impacted by the Russian state backed actors suffering financial, strategic or physical losses.  
+	The secondary stakeholders in this situation would be everyone that knowingly, or unknowingly made up the infrastructure and architecture.  This includes the cloud providers, wi-fi vendors, compromised communication services, compromised IoT devices and AI providers.  The cloud providers hosted the servers, the wi-fi vendors provided the target acquisition landscape, the communication services deepened the network infiltration, the IoT devices obfuscated the origin of the request and the AI providers hosted the brain that executed the plan.
+	Tertiary parties in this case would be the employees of the cloud providers that dealt with the rogue servers, the general public and the owners of the IoT devices used as reflectors.
+## 2. Ethical Dilemma
+	The central ethical dilemma in this case is the deployment of automation in target acquisition, exploitation, and active detection evasion in a national security setting where public safety and public trust will be severely damaged if the operation is successful.
+## 3. Competing Values and Responsibilities
+	The values and responsibilities that are most clearly visible in the case are inter/national security; public safety; public trust; privacy; property.  International security is a concern because the threat actors have been widely attributed to be Russian State backed and they are targeting the safety and stability of other nations.  The national safety of every compromised government official is at risk because of the autonomous actions of Cozy Bear.  Both public safety and public trust have been impacted by the disclosure of sensitive data.  Both privacy and property of the primary stakeholders was completely violated as a direct result of the actions of Cozy Bear.
+## 4. Ethical Analysis
+	Two ethical perspectives the principle of double effect [3] and meta-ethical moral relativism [4].  Both perspectives will be applied to the actions of Cozy Bear from the frame of reference of Cozy Bear to attempt to understand the mental gymnastics that took place in the minds of the actors.
+	The principle of double effect states that if an action has a foreseeable harmful effect that’s functionally married to the good effect of an outcome, the action is justifiable if it meets four criteria [3] :
+    • The action is morally good to neutral;
+    • The agent intends the good effect and does not intend the bad effect, either as a means to the good or to the ends themselves
+    • The good effect must be the primary result of the action and never the secondary action, otherwise the good has been accomplished through evil.
+    • The good effect must outweigh the evil effect.
+	When this is applied to the actions that effected the primary stakeholders we find that the action was not morally good in that they obtained access to personal property by means of deception with the intent to harm the public safety and trust of the world.  Even when shifting the perspective to the Russian side; while they were able to limit the blast radius, their intent was still to cause harm.  The actions of Cozy Bear do not stand up to any of the tests.
+	Meta-ethical moral relativism [4], as defined by the Stanford Encyclopedia of Philosophy, states that;
+The truth or falsity of moral judgments, or their justification, is not absolute or universal, but is relative to the traditions, convictions, or practices of a group of persons. [4]
+	This principle essentially states that it is only by the standards of a society that we can judge an action and effect.  While the individual Cozy Bear actors may be judged with varying degrees of celebration within their own local and national communities, their actions on an international stage have caused more harm than good.
+## 5. Professional Judgment
+	Given the facts of the case; Russia State backed group known as Cozy Bear has widely received attribution of a highly sophisticated, advanced AI-driven CD/CI pipeline that targeted and breached more than 30 organizations spanning the globe paying special attention to European and Ukrainian based organizations.  
+	The deployment of AI in the cyber kill chain should be assumed at every point in the near future, as this case will serve as a blueprint for this type of operation to become localized and hyper-targeted.
